@@ -1,5 +1,5 @@
-const previewPxPerDot = 4;
-const graphPxPerDot = 4;
+const previewPxPerDot = 3;
+const graphPxPerDot = 3;
 const navigationGraphStrokeWidth = 1;
 const graphStrokeWidth = 2;
 const LOG2 = Math.log(2);
@@ -8,6 +8,7 @@ const svgNS = 'http://www.w3.org/2000/svg';
 
 // I am too lazy to do DOM manually / anyway this solution is optimal enough
 
+// ~jsx h function
 const domEl = function(type, cfg = {}) {
     const cls = cfg.cls,
         style = cfg.style,
@@ -114,7 +115,6 @@ PG.prototype = {
         this.columns.forEach((name, i)=>{
             const dataRow = {name: name, show: true, i: i};
             list.push(dataRow);
-
             domEl('label', {
                     cls: 'pcg-checkbox-wrapper',
                     renderTo: switchesEl
@@ -153,7 +153,7 @@ PG.prototype = {
                         })
                     )
                 ),
-                name
+                this.names[name]
             );
 
         });
@@ -296,7 +296,7 @@ PG.prototype = {
         this.colors = data.colors;
         const columns = data.columns;
         const myData = this.data;
-
+        this.names = data.names;
         console.log('Dots count:', columns[0].length);
 
         for (let i = 0, _i = columns.length; i < _i; i++) {
@@ -526,7 +526,9 @@ PG.prototype = {
         // how can we see a tiny spike on the graph?
         // Usually graphs are used to visualize collected data and to investigate anomalies, so I have to follow rule:
         // - give priority to odd points
+        // oddList is redundant. TODO: optimize
         let oddList = [];
+        let lastDot = visible.map(()=>-Infinity);
         for( i = limits.from+1, _i = limits.to; i <= _i; i++ ){
             slice = data[ i ];
             oddList.push(slice);
@@ -557,7 +559,10 @@ PG.prototype = {
                     const x = getX( maxSlice[ 0 ] );
                     drawedDots++;
                     //for( j = 0, _j = visible.length; j < _j; j++ ){
-                    svgData[ k ].push( [ x, getY( maxSlice[ dataRow  ] ) ] );
+                    if(lastDot[k]<x){
+                        lastDot[ k ] = x;
+                        svgData[ k ].push( [ x, getY( maxSlice[ dataRow ] ) ] );
+                    }
                     //}
 
                 }
