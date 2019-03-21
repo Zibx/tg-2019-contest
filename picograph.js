@@ -15,12 +15,13 @@ const domEl = function(type, cfg = {}) {
         prop = cfg.prop,
         on = cfg.on,
         renderTo = cfg.renderTo,
-        el = cfg.el || document.createElement(type);
+        el = cfg.el || document.createElement(type),
+        classList = el.classList;
 
     let i, _i;
 
     if(cls){
-        el.className = cls;
+        cls.split(' ').forEach((clsItem)=>classList.add(clsItem));
     }
 
     if(style){
@@ -89,6 +90,7 @@ PG.prototype = {
     maxDate: null,
     world: null,
     _visible: null,
+    _all: null,
     _forceUpdate: true,
     init: function() {
         this.clear();
@@ -102,6 +104,7 @@ PG.prototype = {
                     .filter( el => el.show )
                     .map( el => el.i );
                 this.update();
+                this.navGraphUpdateVisibility();
             };
 
         while(switchesEl.childNodes.length){
@@ -109,8 +112,8 @@ PG.prototype = {
         }
         let list = [];
         this.columns.forEach((name, i)=>{
-            list.push({name: name, show: true, i: i});
-
+            const dataRow = {name: name, show: true, i: i};
+            list.push(dataRow);
             domEl('label', {
                     cls: 'pcg-checkbox-wrapper',
                     renderTo: switchesEl
@@ -118,6 +121,7 @@ PG.prototype = {
 
                 // children
                 D.input({
+                    cls: 'pcg-checkbox__input',
                     attr: {type: 'checkbox', checked: true},
                     on: {
                         change: (e)=>{
@@ -127,10 +131,27 @@ PG.prototype = {
                         }
                     }
                 }),
+                D.svg({
+                    cls: 'pcg-checkbox__img',
+                    attr: {viewBox: "0 0 30 30"}
+                },
+                    D.path({
+
+                        attr: {
+                            // circle
+                            d: 'M15,15m-13,0a13,13,0,1,0,26,0a13,13,0,1,0,-26,0 ' +
+                            // check
+                               'M21.707,11.707l-7.56,7.56c-0.188,0.188-0.442,0.293-0.707,0.293s-0.52-0.105-0.707-0.293' +
+                                'l-3.453-3.453c-0.391-0.391-0.391-1.023,0-1.414  s1.023-0.391,1.414,0l2.746,2.746' +
+                                'l6.853-6.853c0.391-0.391,1.023-0.391,1.414,0S22.098,11.316,21.707,11.707z'
+                        }
+                    })
+                ),
                 name
             );
 
         });
+        this._all = list.map( el => el.i );
         updateVisible();
 
     },
@@ -328,6 +349,11 @@ PG.prototype = {
         return this._visible;
     },
     updateNav: function() {
+        // On big input data - this update can take a while
+        // So we would check updateNavID is equal to this.updateNavID.
+        const updateNavID = this.updateNavID = Math.random().toString(36).substr(2);
+
+
         const minMax = this._getMinMax( 0, this.data.length - 1 );
 
         if( !this.world ){
@@ -343,7 +369,7 @@ PG.prototype = {
 
         let lastDate = data[ 0 ][ 0 ];
 
-        const visible = this._getVisible();
+        const all = this._all;
 
         const previewWidth = this.world.nav.width;
         const previewHeight = this.world.nav.height;
@@ -356,39 +382,62 @@ PG.prototype = {
         const getX = ( time ) => (( time - minDate ) / momentumDelta * previewWidth)|0;
         const getY = ( val ) => (previewHeight - ( val - minMax.min ) / minMax.delta * previewHeight)|0;
 
-        const svgData = visible.map( ( id, i ) => [
-            [ 0, getY( data[ 0 ][ visible[ i ] + 1 ] ) ]
+
+        const svgData = this._all.map( ( id, i ) => [
+            [ 0, getY( data[ 0 ][ i + 1 ] ) ]
         ] );
 
+        let i = 1, _i = data.length, sliceSum = this._all.map(()=>0), sliceSumCount = 0;
+        const next = ()=>{
+            for( let _i0 = Math.min(_i, i+10000); i < _i0; i++ ){
+                const slice = data[ i ];
 
-        for( let i = 1, _i = data.length; i < _i; i++ ){
-            const slice = data[ i ];
-            // TODO analyze bending
-            if( slice[ 0 ] - lastDate >= momentumInGranule ){
-                const x = getX( slice[ 0 ] );
-                for( let j = 0, _j = visible.length; j < _j; j++ ){
-                    svgData[ j ].push( [ x, getY( slice[ visible[ j ] + 1 ] ) ] );
+                // granular aggregate
+                for( let j = 0, _j = all.length; j < _j; j++ ){
+                    sliceSum[ j ]+=slice[ j + 1 ];
                 }
-                lastDate = slice[ 0 ];
+                sliceSumCount++;
+
+                if( slice[ 0 ] - lastDate >= momentumInGranule ){
+                    const x = getX( slice[ 0 ] );
+                    for( let j = 0, _j = all.length; j < _j; j++ ){
+                        // draw median
+                        svgData[ j ].push( [ x, getY( sliceSum[ j ]/sliceSumCount ) ] );
+                    }
+                    lastDate = slice[ 0 ];
+                    sliceSum = this._all.map(()=>0);
+                    sliceSumCount = 0;
+                }
             }
-        }
 
+            if(i < _i){
+                setTimeout( next, 1 );
+            }else{
+                for( let j = 0, _j = svgData.length; j < _j; j++ ){
+                    graph = document.createElementNS( svgNS, 'path' );
+                    graph.setAttribute( 'stroke', this.colors[ this.columns[ all[ j ] ] ] );
+                    graph.setAttribute( 'stroke-width', navigationGraphStrokeWidth+'' );
+                    graph.setAttribute( 'fill', 'none' );
 
+                    graph.setAttribute(
+                        'd',
+                        'M ' + svgData[ j ].map( ( point ) => point.join( ' ' ) ).join( ' L ' )
+                    );
 
-        for( let j = 0, _j = svgData.length; j < _j; j++ ){
-            graph = document.createElementNS( svgNS, 'path' );
-            graph.setAttribute( 'stroke', this.colors[ this.columns[ visible[ j ] ] ] );
-            graph.setAttribute( 'stroke-width', navigationGraphStrokeWidth+'' );
-            graph.setAttribute( 'fill', 'none' );
+                    this.els.navGraphs.push( graph );
+                    this.els.nav.appendChild( graph );
+                }
+                this.navGraphUpdateVisibility();
+            }
+        };
+        next();
+    },
+    navGraphUpdateVisibility: function() {
+        const visible = this._getVisible();
+        this.els.navGraphs.forEach((el, i)=>{
+            el.style.visibility = visible.indexOf(i)===-1? 'hidden':'visible';
+        });
 
-            graph.setAttribute(
-                'd',
-                'M ' + svgData[ j ].map( ( point ) => point.join( ' ' ) ).join( ' L ' )
-            );
-
-            this.els.navGraphs.push( graph );
-            this.els.nav.appendChild( graph );
-        }
     },
     updateNavWindow: function() {
         const minDate = this.minDate;
@@ -398,6 +447,7 @@ PG.prototype = {
             const lastDate = this.data[this.data.length-1][0];
             this.frame = {to: lastDate, from: lastDate+this.frame.from}
         }
+
         const left = ((this.frame.from-minDate)/momentumDelta*this.world.nav.width)|0,
             width = ((this.frame.to-this.frame.from)/momentumDelta*this.world.nav.width)|0;
 
@@ -408,8 +458,8 @@ PG.prototype = {
         ears[0].style.width = left+'px';
         ears[1].style.width = this.world.nav.width-left-width+'px';
 
-        this.els.navMoveControl.style.width = width-resizeOffset*2+'px';
-        this.els.navMoveControl.style.left = left+resizeOffset+'px';
+        this.els.navMoveControl.style.width = width-resizeOffset+'px';
+        this.els.navMoveControl.style.left = left+resizeOffset/2+'px';
 
         this.els.navExpandControl.style.width = width+resizeOffset+'px';
         this.els.navExpandControl.style.left = left-resizeOffset/2+'px';
@@ -461,47 +511,57 @@ PG.prototype = {
         let lastDate = data[ limits.from ][ 0 ],
             lastSlice = data[limits.from],
             graph,
-            i, _i, j, _j, slice;
+            i, _i, j, _j, k, _k, slice;
 
         while( ( graph = this.els.graphs.pop() ) ){
             this.els.graph.removeChild( graph );
         }
-        let shouldDraw = false;
         let drawedDots = 0;
         // how can we see a tiny spike on the graph?
         // Usually graphs are used to visualize collected data and to investigate anomalies, so I have to follow rule:
         // - give priority to odd points
-        let oddList = []
+        let oddList = [];
         for( i = limits.from+1, _i = limits.to; i <= _i; i++ ){
             slice = data[ i ];
-            if(!shouldDraw){
-                if( slice[ 0 ] - lastDate >= momentumInGranule){
-                    shouldDraw = true;
-
-                }else{
-                    oddList.push(slice);
-                    /*
-                    for( j = 0, _j = visible.length; j < _j; j++ ){
-                        if( Math.abs( slice[ visible[ j ] + 1 ] - lastSlice[ visible[ j ] + 1 ] ) > minMax.delta / Math.PI ){
-                            shouldDraw = true;
-                            break;
+            oddList.push(slice);
+            if( slice[ 0 ] - lastDate >= momentumInGranule){
+                _j = oddList.length;
+                let tDiff = oddList[_j-1][0] - oddList[0][0]-0.01,
+                    centerTime = (oddList[_j-1][0] + oddList[0][0])/2,
+                    midValue,
+                    dataRow,
+                    dt, dv, dt2dv2, maxDt2dv2, maxSlice;
+                for( k = 0, _k = visible.length; k < _k; k++ ){
+                    midValue = 0;
+                    dataRow = visible[ k ] + 1;
+                    for( j = 0; j < _j; j++ ){
+                        midValue += oddList[j][dataRow];
+                    }
+                    midValue /= _j;
+                    maxDt2dv2 = -1;
+                    for( j = 0; j < _j; j++ ){
+                        dt = (centerTime - oddList[j][0])/(tDiff);
+                        dv = midValue - oddList[j][dataRow];
+                        dt2dv2 = dt*dt*dv*dv;
+                        if(dt2dv2>maxDt2dv2){
+                            maxDt2dv2 = dt2dv2;
+                            maxSlice = oddList[j];
                         }
-                    }*/
-                }
-
-            }
-            if(shouldDraw){
-                const x = getX( slice[ 0 ] );
-                drawedDots++;
-                for( j = 0, _j = visible.length; j < _j; j++ ){
-                    svgData[ j ].push( [ x, getY( slice[ visible[ j ] + 1 ] ) ] );
+                    }
+                    const x = getX( maxSlice[ 0 ] );
+                    drawedDots++;
+                    //for( j = 0, _j = visible.length; j < _j; j++ ){
+                    svgData[ k ].push( [ x, getY( maxSlice[ dataRow  ] ) ] );
+                    //}
 
                 }
+
+
                 lastDate = slice[ 0 ];
                 lastSlice = slice;
-                shouldDraw = false;
+                i-=(oddList.length/3)|0;
+                oddList.length = 0;
             }
-
         }
         console.log('Dots:', drawedDots);
 

@@ -24,17 +24,25 @@ window.data = [ {
     "names": { "y0": "#0", "y1": "#1", "y2": "#2", "y3": "#3" },
     "colors": { "y0": "#cb513a", "y1": "#73c03a", "y2": "#65b9ac", "y3": "#4682b4" }
 }, {
-    "columns": ['x','y0','y1','y2','y3'].map((name)=>{
+    "columns": ['x','y0','y1','y2','y3','y4','y5','y6'].map((name,j)=>{
         const arr = [name];
-        var d = +new Date()-60*60*1000*24*30000
-        for(var i = 0; i < 10000; i++)
+        var d = +new Date()-1000*60*60*24*3000
+        for(var i = 0; i < 100000; i++)
             if(name === 'x')
-                arr.push(d+i*10000000)
+                arr.push(d+i*1000*60*20);
             else
-                arr.push(Math.random()*10+Math.sin(i)*3+10)
+                arr.push(Math.random()*3+Math.sin(i/50*(j+1)/30+j)*4+10+j*i/1000000+j);
         return arr;
     }),
-    "types": { "y0": "line", "y1": "line", "y2": "line", "y3": "line", "x": "x" },
-    "names": { "y0": "#0", "y1": "#1", "y2": "#2", "y3": "#3" },
-    "colors": { "y0": "#cb513a", "y1": "#73c03a", "y2": "#65b9ac", "y3": "#4682b4" }
+    "types": { "y0": "line", "y1": "line", "y2": "line", "y3": "line", "y4": "line", "y5": "line", "y6": "line", "x": "x" },
+    "names": { "y0": "Red", "y1": "Orange", "y2": "Yellow", "y3": "Green", "y4": "Blue", "y5": "Indigo", "y6": "Violet" },
+    "colors": {
+        "y0": "#cb312a",
+        "y1": "#c06422",
+        "y2": "#cab718",
+        "y3": "#36b33c",
+        "y4": "#3ebbc0",
+        "y5": "#3e76b9",
+        "y6": "#7d4fb4"
+    }
 } ];
