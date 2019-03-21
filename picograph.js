@@ -1,9 +1,9 @@
 const previewPxPerDot = 4;
 const graphPxPerDot = 4;
-const navigationGraphStrokeWidth = 2;
-const graphStrokeWidth = 6;
+const navigationGraphStrokeWidth = 1;
+const graphStrokeWidth = 2;
 const LOG2 = Math.log(2);
-const resizeOffset = 20;
+const resizeOffset = 10;
 const svgNS = 'http://www.w3.org/2000/svg';
 
 // I am too lazy to do DOM manually / anyway this solution is optimal enough
