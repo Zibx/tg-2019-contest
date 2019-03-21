@@ -114,6 +114,7 @@ PG.prototype = {
         this.columns.forEach((name, i)=>{
             const dataRow = {name: name, show: true, i: i};
             list.push(dataRow);
+
             domEl('label', {
                     cls: 'pcg-checkbox-wrapper',
                     renderTo: switchesEl
@@ -133,7 +134,10 @@ PG.prototype = {
                 }),
                 D.svg({
                     cls: 'pcg-checkbox__img',
-                    attr: {viewBox: "0 0 30 30"}
+                    attr: {
+                        viewBox: "0 0 30 30",
+                    },
+                    style: {fill: this.colors[name]}
                 },
                     D.path({
 
