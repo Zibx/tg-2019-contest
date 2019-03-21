@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="picograph.js"></script>
+    <style>
+        body {
+            margin: 20px;
+            padding: 0;
+            font-family: Verdana;
+            font-size: 200%;
+        }
+        .graph {
+            height: 500px;
+            /*background: #4b4b4b;*/
+        }
+        .graph-nav {
+            height: 114px;
+            background: #ffffff;
+        }
+        .graph-nav, .graph {
+            width: 100%;
+            position: relative;
+        }
+        .graph-switches {
+            width: 100%;
+            margin: 1.5em 0;
+        }
+        .graph svg, .graph-nav svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+        H1 {
+            margin: 20px
+        }
+        .navWindow {
+            border: solid #DDEAF3;
+            border-width: 3px 12px;
+            position: absolute;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .navEar {
+            background: rgba(232, 243, 249, 0.75);
+            position: absolute;
+        }
+        .pcg-nav__move-control, .pcg-nav__expand-control {
+            position: absolute;
+            top: -4px;
+            bottom: -4px;
+            width: 100px;
+        }
+        .pcg-nav__expand-control {
+            cursor: ew-resize;
+            width: 200px;
+        }
+        .pcg-nav__move-control {
+            cursor: move;
+        }
+        .pcg-checkbox-wrapper {
+            border: 2px solid #E6ECF0;
+            border-radius: 2em;
+            padding: 23px;
+            padding-left: 0;
+            margin: 0.5em;
+            color: #43484B;
+        }
+        .pcg-checkbox-wrapper input {
+            margin-right: 2em;
+        }
+
+    </style>
+</head>
+<body>
+    <H3>Followers</H3>
+    <!-- It is a feature - you can spread different parts of graphic all over the page -->
+    <div class="graph"></div>
+    <div class="graph-nav"></div>
+    <div class="graph-switches"></div>
+
+    <!-- load hardcoded test data -->
+    <script src="data.js"></script>
+
+    <script>
+        /*
+        PG - picograph. Init it with a config object
+            frame - {from: timestamp, to: timestamp} || {to: null, from: -deltaTime}
+            renderTo - specify all 3 elements to render parts of picograph:
+                graph div,
+                navigation div
+                switches div
+
+        You can restyle everything with css
+         */
+        const graph = new PG({
+            renderTo: {
+                graph: document.querySelector('.graph'),
+                nav: document.querySelector('.graph-nav'),
+                switches: document.querySelector('.graph-switches'),
+            },
+            frame: {
+                from: -1000*60*60*24*30, // month ago
+                to: null
+            }
+        });
+
+        graph.load(data[5]);
+        window.addEventListener('resize', graph.resize)
+    </script>
+</body>
+</html>
