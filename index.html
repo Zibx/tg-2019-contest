@@ -24,8 +24,10 @@
             position: relative;
         }
         .graph-switches {
+            display: flex;
+            flex-wrap: wrap;
             width: 100%;
-            margin: 1.5em 0;
+            margin: 22px 0;
         }
         .graph svg, .graph-nav svg {
             width: 100%;
@@ -61,15 +63,17 @@
         }
         .pcg-checkbox-wrapper {
             position: relative;
-            border: 2px solid #E6ECF0;
+            flex: none;
+            display: flex;
+            align-items: center;
+            margin: 0 21px 21px 0;
+            border: 1px solid #e6ecf0;
             border-radius: 2em;
-            padding: 11px 11px 11px 0;
-            margin: 0.5em;
+            padding: 7px 18px 7px 10px;
             color: #43484B;
+            cursor: pointer;
         }
-        .pcg-checkbox-wrapper input {
-            margin-right: 2em;
-        }
+        
         .pcg-checkbox__input {
             position: absolute;
             opacity: 0;
@@ -77,13 +81,17 @@
             height: 1px;
             overflow: hidden;
         }
+
+        .pcg-checkbox__input:checked + svg {
+            fill: #3cc23f;
+        }
+
         .pcg-checkbox__img {
-            width: 30px;
-            height: 30px;
-            top: 7px;
-            position: relative;
-            left: 7px;
-            margin-right: 15px;
+            display: block;
+            fill: #f34c44;
+            width: 34px;
+            height: 34px;
+            margin-right: 12px;
         }
 
     </style>
