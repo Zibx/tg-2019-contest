@@ -82,29 +82,34 @@
             overflow: hidden;
         }
 
-        .pcg-checkbox__img {
+        .pcg-checkbox__img-wrapper {
             position: relative;
-            display: block;
-            width: 34px;
-            height: 34px;
             margin-right: 12px;
         }
 
-        .pcg-checkbox__img::after {
+        .pcg-checkbox__img-wrapper::after {
             content: "";
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             display: block;
-            width: 30px;
-            height: 30px;
+            width: 26px;
+            height: 26px;
             background-color: #fff;
             border-radius: 50%;
+            transition: width 0.3s ease, height 0.3s ease;
         }
 
-        .pcg-checkbox__input:checked + svg {
+        .pcg-checkbox__img {
+            display: block;
+            width: 34px;
+            height: 34px;
+        }
 
+        .pcg-checkbox__input:checked + .pcg-checkbox__img-wrapper::after {
+            width: 0;
+            height: 0;
         }
 
     </style>
