@@ -82,16 +82,29 @@
             overflow: hidden;
         }
 
-        .pcg-checkbox__input:checked + svg {
-            fill: #3cc23f;
-        }
-
         .pcg-checkbox__img {
+            position: relative;
             display: block;
-            fill: #f34c44;
             width: 34px;
             height: 34px;
             margin-right: 12px;
+        }
+
+        .pcg-checkbox__img::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: block;
+            width: 30px;
+            height: 30px;
+            background-color: #fff;
+            border-radius: 50%;
+        }
+
+        .pcg-checkbox__input:checked + svg {
+
         }
 
     </style>
