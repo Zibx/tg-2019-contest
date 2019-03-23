@@ -124,6 +124,7 @@ H1 {
     font-size: 15px;
     left: 1px;
     color: #96A2AA;
+    text-shadow: 2px 2px 0 #fff;
 }
 img {
     position: absolute;
@@ -149,9 +150,8 @@ img {
     font-size: 17px;
     font-weight: bold;
 }
-.pcg-tooltip__info-item {
-    float: left;
-    font-size: 15px;
+.pcg-tooltip__info {
+    display: flex;
 }
 .pcg-tooltip__info-item__count {
     font-weight: bold;
@@ -159,7 +159,7 @@ img {
     margin: 11px 0 0;
 }
 .pcg-tooltip__info-item {
-    float: left;
+    flex: none;
     font-size: 15px;
     padding-right: 27px;
 }
