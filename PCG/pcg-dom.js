@@ -25,6 +25,7 @@
             verticalMouseSlice: D.div({cls: 'pcg-tooltip__vertical-slice', renderTo: around.graph}),
             graph: D.svg({renderTo: around.graph}),
             yAxisLabelsStorage: D.div({renderTo: around.graph}),
+            xAxisLabelsStorage: D.div({renderTo: around.graph}),
 
             tooltip: D.div({cls: 'pcg-tooltip', renderTo: around.graph}),
             tooltipDate: D.div({cls: 'pcg-tooltip__date'}),
@@ -34,8 +35,10 @@
             highlightCircles: [],
             navGraphs: [],
             graphs: [],
+            YAxisHash: {},/*
             YAxis: [],
-            YAxisLabels: [],
+            YAxisLabels: [],*/
+
             XAxis: []
         };
         this.els.tooltip.appendChild(this.els.tooltipDate);
@@ -118,7 +121,7 @@
 
             this.els.navExpandControl.addEventListener('touchend', up);
             this.els.navExpandControl.addEventListener('touchcancel', up);
-            this.els.navExpandControl.addEventListener('touchmove', touchMove, true);
+            this.els.navExpandControl.addEventListener('touchmove', touchMove);//, true);
             e.preventDefault && e.preventDefault();
             //e.stopPropagation && e.stopPropagation();
         };
@@ -131,6 +134,7 @@
 
 
             }
+            e.preventDefault();
         }, true);
         this.els.navMoveControl.addEventListener('mousedown', (e)=> {
             let start = [ e.clientX, e.clientY ];
@@ -192,7 +196,6 @@
                 });
                 lastNearest = nearest;
             }
-            e.stopPropagation();
         });
         this.renderTo.graph.addEventListener('mouseleave', function(e){
             _self.hideTooltip();

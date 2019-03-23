@@ -114,7 +114,6 @@
 
         this.els.navExpandControl.style.width = width+resizeOffset+'px';
         this.els.navExpandControl.style.left = left-resizeOffset/2+'px';
-        this.updateXAxis();
     };
     PCG.navGraphUpdateVisibility = function navGraphUpdateVisibility() {
         const visible = this._getVisible();

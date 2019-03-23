@@ -117,13 +117,21 @@ H1 {
     width: 100%;
     border-bottom: 1px solid #ECF0F3;
     height: 0;
-
+    transition: top, opacity ease-in 0.1s;
 }
 .pcg-y-axis-label {
     position: absolute;
     font-size: 15px;
     left: 1px;
     color: #96A2AA;
+    transition: bottom, opacity ease-in 0.1s;
+    opacity: 0.3;
+}
+.pcg-y-axis.hide, .pcg-y-axis-label.hide {
+    opacity: 0;
+}
+.pcg-y-axis.visible, .pcg-y-axis-label.visible {
+    opacity: 1;
 }
 img {
     position: absolute;
@@ -173,4 +181,12 @@ img {
     bottom: 40px;
     border-left: 2px solid #ECF0F3;
     display: none;
+}
+.pcg-x-axis-label {
+    position: absolute;
+    bottom: 10px;
+    font-size: 15px;
+    color: #96A2AA;
+    white-space: nowrap;
+    transform: translateX(-50%)
 }

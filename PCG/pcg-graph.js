@@ -5,10 +5,23 @@
         const limits = {
                 from: this._binarySearch(this.frame.from)-1,
                 to: this._binarySearch(this.frame.to)+1
-            },
-            minMax = this._getMinMax( limits.from, limits.to ),
+            };
 
-            maxDotsCount = this.world.graph.width / this.consts.graphPxPerDot,
+        let minMax = this._getMinMax( limits.from, limits.to );
+        if(this.camera === null){
+            this.camera = {minMax: minMax};
+        }else{
+            if(Math.abs(this.camera.minMax.max - minMax.max)>0.01) {
+                this.update();
+            }
+
+            minMax.max = (this.camera.minMax.max*5 + minMax.max)/6;
+            minMax.delta = minMax.max - minMax.min;
+            this.camera.minMax = minMax;
+        }
+
+
+        const maxDotsCount = this.world.graph.width / this.consts.graphPxPerDot,
             minDate = this.frame.from,
             momentumDelta = ( this.frame.to - minDate ),
             momentumInGranule = momentumDelta / maxDotsCount,
@@ -102,6 +115,7 @@
             this.els.graph.appendChild( graph );
         }
 
+        this.updateXAxis();
 
     };
 })(window['PCG']);

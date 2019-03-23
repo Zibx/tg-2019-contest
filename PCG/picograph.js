@@ -38,6 +38,7 @@
         initDOM: PCG.initDOM,
         initListeners: PCG.initListeners,
         clear: function(){
+            this.camera = null;
             this.colors = {};
             this.data = [];
             this.columns = [];
