@@ -9,7 +9,7 @@
 
         let minMax = this._getMinMax( limits.from, limits.to );
         if(this.camera === null){
-            this.camera = {minMax: minMax};
+            this.camera = {minMax: minMax, offset: this.data[0][0]};
         }else{
             if(Math.abs(this.camera.minMax.max - minMax.max)>0.01) {
                 this.update();

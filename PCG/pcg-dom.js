@@ -69,6 +69,7 @@
                 if(frame.from< this.minDate){
                     frame.from = this.minDate;
                 }
+                this.camera.offset = frame.from;
             }else{
                 frame.to = startFrame+frameWidth+moved;
                 if(frame.to<frame.from+pxToTime(resizeOffset*1.3)){
@@ -77,7 +78,10 @@
                 if(frame.to > this.maxDate){
                     frame.to = this.maxDate;
                 }
+                this.camera.offset = frame.to;
             }
+            this.camera.action = 'resize';
+            this.camera.toLeft = toLeft;
 
             this.update();
         };
@@ -128,13 +132,14 @@
 
 
         this.els.navExpandControl.addEventListener('mousedown', down);
+        document.addEventListener('touchstart', (e)=>{
+            console.log('touch start', e.currentTarget)
+        })
         this.els.navExpandControl.addEventListener('touchstart', (e)=>{
             if(e.touches && e.touches.length){
                 down( e.touches[ 0 ] );
-
-
             }
-            e.preventDefault();
+            e.cancelable && e.preventDefault();
         }, true);
         this.els.navMoveControl.addEventListener('mousedown', (e)=> {
             let start = [ e.clientX, e.clientY ];
@@ -147,7 +152,7 @@
             const move = ( e ) => {
                 let point = [ e.clientX, e.clientY ];
 
-
+                this.camera.action = 'move';
                 frame.from = startFrame +
                     ( point[ 0 ] - start[ 0 ] ) / world.nav.width * ( this.maxDate - this.minDate );
                 if( frame.from < this.minDate ){

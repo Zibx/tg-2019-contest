@@ -6,7 +6,7 @@
             from = minMax.min;
         const yAxisStorage = this.els.yAxisStorage;
         const yAxisLabelsStorage = this.els.yAxisLabelsStorage;
-        let label;
+        let item, line, label;
 
         const count = 7;
 
@@ -33,20 +33,23 @@
                 val = out[i];
                 usedHash[val] = true;
                 if(val in hash){
-                    if(hash[val].destroy !== false){
-                        hash[val].destroy = false;
-                        hash[val].line.classList.remove('hide');
-                        hash[val].label.classList.remove('hide');
-                        hash[val].line.classList.add('visible');
-                        hash[val].label.classList.add('visible');
+                    item = hash[val];
+                    line = item.line;
+                    label = item.label;
+                    if(item.destroy !== false){
+                        item.destroy = false;
+                        line.classList.remove('hide');
+                        label.classList.remove('hide');
+                        line.classList.add('visible');
+                        label.classList.add('visible');
                     }
-                    if(hash[val].visible === false){
-                        hash[val].visible = true;
-                        hash[val].line.classList.add('visible');
-                        hash[val].label.classList.add('visible');
+                    if(item.visible === false){
+                        item.visible = true;
+                        line.classList.add('visible');
+                        label.classList.add('visible');
                     }
-                    hash[val].line.style.top = pos + 'px';
-                    hash[val].label.style.bottom = offset - pos  +'px';
+                    line.style.top = pos + 'px';
+                    label.style.bottom = offset - pos  +'px';
                 }else{
                     hash[val] = {
                         val: val,
@@ -71,19 +74,23 @@
         }
         for( val in hash ){
             if(!(val in usedHash)){
-                let pos = getY(hash[val].val);
-                hash[val].line.style.top = pos + 'px';
-                hash[val].label.style.bottom = offset - pos  +'px';
-                if(hash[val].destroy === false){
-                    hash[val].destroy = now + 700;
-                    hash[val].line.classList.add('hide');
-                    hash[val].label.classList.add('hide');
-                    hash[val].line.classList.remove('visible');
-                    hash[val].label.classList.remove('visible');
+                item = hash[val];
+                line = item.line;
+                label = item.label;
+
+                let pos = getY(item.val);
+                line.style.top = pos + 'px';
+                label.style.bottom = offset - pos  +'px';
+                if(item.destroy === false){
+                    item.destroy = now + 700;
+                    line.classList.add('hide');
+                    label.classList.add('hide');
+                    line.classList.remove('visible');
+                    label.classList.remove('visible');
                 } else {
-                    if(hash[val].destroy<now){
-                        yAxisLabelsStorage.removeChild(hash[val].label);
-                        yAxisStorage.removeChild(hash[val].line);
+                    if(item.destroy<now){
+                        yAxisLabelsStorage.removeChild(item.label);
+                        yAxisStorage.removeChild(item.line);
                         delete hash[val];
                     }
                 }
@@ -96,7 +103,7 @@
             to = this.frame.to,
             delta = to - from,
             granule = delta / 6,
-            bigBang = this.data[0][0],
+            bigBang = this.camera.offset,
             initialTimeOffset = bigBang % granule,
             spinOffTime = (from % granule) - initialTimeOffset;
         let i, val, left, date;

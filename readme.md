@@ -1,20 +1,9 @@
-# JS Telegram 2019 March Contest
-
-## How to make a good plotting library
-
-### 0) List of abbreviates // TODO check
-
-- chart, graphic - colored segmented line
-- switch - checkbox (input control with two states)
-- dot - minimal amount of data (item that can be drawn) [time, value] [x, y]
-- row - all dots of the same group ordered by date
-- granule - slice of row - an array of dots in some time period
-
+#### _JS Telegram 2019 March Contest_
+# How to make a good chart plotting library
  
 ### 1) Make a plan of features
 Write down full list of features that you are going to implement and think about architecture. Do not write code for at least 10 minutes -- paper and pencil are your best friends.
 
-This step leads me to ~ this to do list
 
 ##### 1. Split layout into 3 parts:
   - Main chart area
@@ -103,13 +92,37 @@ TODO
 - Values should keep their position if view frame is moved
 
 ##### 11. Animations
-- X Axis on move (+)
-- X Axis on resize
-- Y Axis (+)
-- graph (+)
-- navigation on deselect
+###### X Axis move animation
+X Axis values should stay on their places while time frame is moved. It can be easily achieved by calculating diff between `left_chart_bound` mod `full_single_axis_label_interval` and `dataset_start` mod `full_single_axis_label_interval`.
+    
+
+###### X Axis on window resize animation
+I kept the formula of calculating label positions, and just slightly hinted `dataset_start`. It become a dynamic property that I nail to left or right chart bound on navigation window resizing.  
+
+###### Y Axis
+Just make hash of currently displayed values and start `remove` animation when there is no such value in current axis labels. While animation is not finished — value position is keep updating. 
+
+###### Chart vertical scaling
+It is the easiest animation, you just have to:
+1. Calculate min\max of currently displayed dots
+2. Get the median from new `min\max` to `previous_frame_min\max`
+3. Move the median closer to previous value to slow down the animation. I used 1/6 of new value mixing up
+4. Redraw chart until |`new min\max` – `old min\max`| > `epsilon`
+ 
+
+###### Disappear and scale chart in navigation
+
 
 
 
 ### 1) Respect big data and algorithmic complexity
 When implement any logic
+
+
+__List of abbreviations__
+
+- _chart, graphic_ — colored segmented line
+- _switch_ — checkbox (input control with two states)
+- _dot_ — minimal amount of data. Contains only `x` and `y` (`time` and `value` in our case)
+- _row_ — all dots of the same group ordered by date
+- _granule_ — slice of single row (an array of dots in some time period)

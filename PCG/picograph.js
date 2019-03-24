@@ -79,6 +79,7 @@
             this.maxDate = myData[ myData.length - 1 ][ 0 ];
             this.initCheckboxes();
             this._forceUpdate = true;
+
             this.update();
         },
         _getMinMax: function( from, to ){
@@ -110,6 +111,9 @@
             min = 0;
             max *= 1.05;
             const delta = ( max - min );
+            if(max===-Infinity){
+                return this.camera.minMax;
+            }
             return { min, max, delta: delta };
         },
         _getVisible: function(){
