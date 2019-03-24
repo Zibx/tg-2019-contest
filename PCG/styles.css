@@ -131,14 +131,6 @@ H1 {
     transition: bottom, opacity ease-in 0.1s;
     opacity: 0.3;
 }
-
-.night .graph-nav {background: #000}
-.night .navWindow {border-color: #cf0}
-.night .navEar {border-color: #250}
-.night .pcg-checkbox-wrapper {border-color: #211;color:#991}
-.night .pcg-checkbox__img-wrapper::after {background-color: #8ee}
-.night .pcg-y-axis {border-bottom-color: #632}
-.night {background: navy}
 .pcg-y-axis.hide, .pcg-y-axis-label.hide {
     opacity: 0;
 }
@@ -204,4 +196,30 @@ img {
 
 .graph-mode-switch {
     font-size:30px
+}
+
+.night .title {color: #fff;}
+.night .graph-nav {background: #212f3f}
+.night .navWindow {border-color: rgba(91, 107, 127, 0.9)}
+.night .navEar {border-color: #250; background-color: rgba(91, 107, 127, 0.4)}
+.night .pcg-checkbox-wrapper {border-width: 2px;border-color: #344658; color:#fff}
+.night .pcg-checkbox__img-wrapper::after {background-color: #8ee}
+.night .pcg-y-axis {border-bottom-color: rgba(91, 107, 127, 0.3)}
+.night .pcg-y-axis-label, .night .pcg-x-axis-label {color: #5b6b7f; text-shadow: 2px 2px 0 #213040; opacity: 1}
+.night .graph-mode-switch {color: #1891ff}
+.night .pcg-tooltip {background-color: #1a2837; box-shadow: none;}
+.night .pcg-tooltip__date {color: #fff}
+.night .pcg-tooltip__vertical-slice {border-color: rgba(91, 107, 127, 0.9)}
+.night {background: #213040}
+.night .pcg-checkbox__img-wrapper {position: relative; width: 28px; height: 28px; background-color: #fff; border-radius: 50%; overflow: hidden;}
+.night .pcg-checkbox__img-wrapper svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%)
+}
+.night .pcg-checkbox__img-wrapper::after {
+    width: 24px;
+    height: 24px;
+    background-color: #213040;
 }
