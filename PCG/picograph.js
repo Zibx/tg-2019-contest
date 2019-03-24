@@ -203,7 +203,7 @@
             const tooltipStyle = this.els.tooltip.style;
             const tooltipRect = this.els.tooltip.getClientRects()[0];
 
-            this.els.verticalMouseSlice.style.left = xPos+'px';
+            this.els.verticalMouseSlice.style.left = xPos-1+'px';
             this.els.verticalMouseSlice.style.display = 'block';
 
             let tooltipLeft = xPos - tooltipRect.width/3.5;
