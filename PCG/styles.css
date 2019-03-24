@@ -3,18 +3,15 @@ body {
     padding: 0;
     font-family: sans-serif;
     font-size: 20px;
-    overflow-x: hidden;
+
 }
 .graph {
     height: 470px;
     margin-bottom: 10px;
-    /*background: #4b4b4b;*/
-
 }
 .graph-nav {
     height: 57px;
     background: #ffffff;
-    overflow: hidden;
 }
 .graph-nav, .graph {
     width: 100%;

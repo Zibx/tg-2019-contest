@@ -81,6 +81,7 @@
             this._forceUpdate = true;
 
             this.update();
+            setTimeout(this._update, 100);
         },
         _getMinMaxRow: function( from, to, row ){
             const data = this.data;

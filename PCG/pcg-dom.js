@@ -35,10 +35,7 @@
             highlightCircles: [],
             navGraphs: [],
             graphs: [],
-            YAxisHash: {},/*
-            YAxis: [],
-            YAxisLabels: [],*/
-
+            YAxisHash: {},
             XAxisHash: {}
         };
         this.XAxisLabelCount = 0;
@@ -58,18 +55,11 @@
 
         let toLeft = true;
 
-        const move = (e)=>{
+        const resizeMove = (e)=>{
             console.log('move', e.type);
             let point = [e.clientX, e.clientY];
             let moved = pxToTime(point[0]-start[0]);
             if(toLeft){
-                const from = this.frame.from,
-                    to = this.frame.to,
-                    delta = to - from,
-                    granule = delta / 6,
-                    spinOffTime = ((from) % granule) - (this.camera.offset % granule);
-                let val0 = from-spinOffTime+granule * 6;
-
                 frame.from = startFrame+moved;
                 if(frame.from>frame.to-pxToTime(resizeOffset*1.3)){
                     frame.from = frame.to - pxToTime( resizeOffset*1.3 );
@@ -88,10 +78,6 @@
                     frame.to = this.maxDate;
                 }
 
-                /*let val = (this.camera.offset % this.camera.AxisXGranule) - (this.frame.from % this.camera.AxisXGranule)+this.frame.from;
-                let left = this.getX(val);
-                let unLeft = this.xToTime(left);
-*/
                 this.camera.offset = frame.from;//unLeft;
             }
             this.camera.action = 'resize';
@@ -104,24 +90,25 @@
             this.camera.AxisXGranule = day * Math.pow(2, Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)));
             this.update();
         };
-        const touchMove = (e)=>{
+        const touchResizeMove = (e)=>{
             if(e.touches && e.touches.length){
-                move( e.touches[ 0 ] );
+                resizeMove( e.touches[ 0 ] );
                 //e.stopPropagation();
             }
         };
-        const up = (e)=>{
+        const resizeUp = (e)=>{
             console.log('up', e && e.type);
-            window.removeEventListener('mouseup', up);
-            document.removeEventListener('mousemove', move);
+            window.removeEventListener('mouseup', resizeUp);
+            document.removeEventListener('mousemove', resizeMove);
 
-            this.els.navExpandControl.removeEventListener('touchend', up);
-            this.els.navExpandControl.removeEventListener('touchcancel', up);
-            this.els.navExpandControl.removeEventListener('touchmove', touchMove);
-            e && e.preventDefault();
+            this.els.navExpandControl.removeEventListener('touchend', resizeUp);
+            this.els.navExpandControl.removeEventListener('touchcancel', resizeUp);
+            this.els.navExpandControl.removeEventListener('touchmove', touchResizeMove);
+            e && e.cancelable && e.preventDefault();
         };
 
-        const down = (e)=>{
+        const resizeDown = (e)=>{
+            this.hideTooltip();
             console.log('down', e.type);
             start = [e.clientX, e.clientY];
             world = this.world;
@@ -138,62 +125,87 @@
             }
             pxToTime = (px)=>px/world.nav.width*(this.maxDate-this.minDate);
 
-            up();
-            window.addEventListener('mouseup', up);
-            document.addEventListener('mousemove', move);
+            resizeUp();
+            window.addEventListener('mouseup', resizeUp);
+            document.addEventListener('mousemove', resizeMove);
 
-            this.els.navExpandControl.addEventListener('touchend', up);
-            this.els.navExpandControl.addEventListener('touchcancel', up);
-            this.els.navExpandControl.addEventListener('touchmove', touchMove);//, true);
+            this.els.navExpandControl.addEventListener('touchend', resizeUp);
+            this.els.navExpandControl.addEventListener('touchcancel', resizeUp);
+            this.els.navExpandControl.addEventListener('touchmove', touchResizeMove);//, true);
             e.preventDefault && e.preventDefault();
-            //e.stopPropagation && e.stopPropagation();
         };
 
 
-        this.els.navExpandControl.addEventListener('mousedown', down);
+        this.els.navExpandControl.addEventListener('mousedown', resizeDown);
         document.addEventListener('touchstart', (e)=>{
-            console.log('touch start', e.currentTarget)
-        })
+            //console.log(e.path)
+        });
         this.els.navExpandControl.addEventListener('touchstart', (e)=>{
             if(e.touches && e.touches.length){
-                down( e.touches[ 0 ] );
+                resizeDown( e.touches[ 0 ] );
             }
             e.cancelable && e.preventDefault();
         }, true);
-        this.els.navMoveControl.addEventListener('mousedown', (e)=> {
-            let start = [ e.clientX, e.clientY ];
 
-            const world = this.world;
-            const frame = this.frame;
-            const frameWidth = frame.to - frame.from,
-                startFrame = frame.from;
 
-            const move = ( e ) => {
-                let point = [ e.clientX, e.clientY ];
+        const touchMoveMove = (e)=>{
+            if(e.touches && e.touches.length){
+                moveMove( e.touches[ 0 ] );
+            }
+        };
+        const moveMove = ( e ) => {
+            let point = [ e.clientX, e.clientY ];
 
-                this.camera.action = 'move';
-                frame.from = startFrame +
-                    ( point[ 0 ] - start[ 0 ] ) / world.nav.width * ( this.maxDate - this.minDate );
-                if( frame.from < this.minDate ){
-                    frame.from = this.minDate;
-                }
-                frame.to = frame.from + frameWidth;
-                if( frame.to > this.maxDate ){
-                    frame.to = this.maxDate;
-                    frame.from = frame.to - frameWidth;
-                }
-                this.update();
-                e.cancelable && e.preventDefault();
-            };
-            const up = () => {
-                window.removeEventListener( 'mouseup', up );
-                window.removeEventListener( 'mousemove', move );
-            };
-            window.addEventListener( 'mouseup', up );
-            window.addEventListener( 'mousemove', move );
-            //e.preventDefault();
-            //e.stopPropagation();
-        });
+            this.camera.action = 'move';
+            frame.from = startFrame +
+                ( point[ 0 ] - start[ 0 ] ) / world.nav.width * ( this.maxDate - this.minDate );
+            if( frame.from < this.minDate ){
+                frame.from = this.minDate;
+            }
+            frame.to = frame.from + frameWidth;
+            if( frame.to > this.maxDate ){
+                frame.to = this.maxDate;
+                frame.from = frame.to - frameWidth;
+            }
+            this.update();
+            e.cancelable && e.preventDefault();
+        };
+        const moveUp = (e) => {
+            window.removeEventListener( 'mouseup', moveUp );
+            document.removeEventListener( 'mousemove', moveMove );
+
+            this.els.navMoveControl.removeEventListener('touchend', moveUp);
+            this.els.navMoveControl.removeEventListener('touchcancel', moveUp);
+            this.els.navMoveControl.removeEventListener('touchmove', touchMoveMove);
+
+            e && e.cancelable && e.preventDefault();
+        };
+        const moveDown = (e)=> {
+            start = [ e.clientX, e.clientY ];
+
+            world = this.world;
+            frame = this.frame;
+            frameWidth = frame.to - frame.from;
+            startFrame = frame.from;
+
+            moveUp();
+            window.addEventListener( 'mouseup', moveUp );
+            document.addEventListener( 'mousemove', moveMove );
+
+            this.els.navMoveControl.addEventListener('touchend', moveUp);
+            this.els.navMoveControl.addEventListener('touchcancel', moveUp);
+            this.els.navMoveControl.addEventListener('touchmove', touchMoveMove);//, true);
+
+            //e.preventDefault && e.preventDefault();
+        };
+        this.els.navMoveControl.addEventListener('mousedown', moveDown);
+
+        this.els.navMoveControl.addEventListener('touchstart', (e)=>{
+            if(e.touches && e.touches.length){
+                moveDown( e.touches[ 0 ] );
+            }
+            //e.cancelable && e.preventDefault();
+        }, true);
 
         const _self = this;
         let lastNearest;

@@ -128,8 +128,8 @@
         ears[0].style.width = left+'px';
         ears[1].style.width = this.world.nav.width-left-width+'px';
 
-        this.els.navMoveControl.style.width = width-resizeOffset+'px';
-        this.els.navMoveControl.style.left = left+resizeOffset/2+'px';
+        this.els.navMoveControl.style.width = width-resizeOffset/2+'px';
+        this.els.navMoveControl.style.left = left+resizeOffset/4+'px';
 
         this.els.navExpandControl.style.width = width+resizeOffset+'px';
         this.els.navExpandControl.style.left = left-resizeOffset/2+'px';
