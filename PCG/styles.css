@@ -14,7 +14,6 @@ body {
     height: 57px;
     background: #ffffff;
     overflow: hidden;
-
 }
 .graph-nav, .graph {
     width: 100%;
@@ -42,12 +41,16 @@ H1 {
     height: 100%;
     box-sizing: border-box;
 }
+
 .navEar {
     background: rgba(232, 243, 249, 0.62);
     position: absolute;
     top: 0;
     bottom: 0;
 }
+
+
+
 .pcg-nav__move-control, .pcg-nav__expand-control {
     position: absolute;
     top: -4px;
@@ -124,9 +127,18 @@ H1 {
     font-size: 15px;
     left: 1px;
     color: #96A2AA;
+    text-shadow: 0 0 1px white, 0 0 1px white, 0 0 1px white;
     transition: bottom, opacity ease-in 0.1s;
     opacity: 0.3;
 }
+
+.night .graph-nav {background: #000}
+.night .navWindow {border-color: #cf0}
+.night .navEar {border-color: #250}
+.night .pcg-checkbox-wrapper {border-color: #211;color:#991}
+.night .pcg-checkbox__img-wrapper::after {background-color: #8ee}
+.night .pcg-y-axis {border-bottom-color: #632}
+.night {background: navy}
 .pcg-y-axis.hide, .pcg-y-axis-label.hide {
     opacity: 0;
 }
@@ -157,9 +169,8 @@ img {
     font-size: 17px;
     font-weight: bold;
 }
-.pcg-tooltip__info-item {
-    float: left;
-    font-size: 15px;
+.pcg-tooltip__info {
+    display: flex;
 }
 .pcg-tooltip__info-item__count {
     font-weight: bold;
@@ -167,7 +178,7 @@ img {
     margin: 11px 0 0;
 }
 .pcg-tooltip__info-item {
-    float: left;
+    flex: none;
     font-size: 15px;
     padding-right: 27px;
 }
@@ -189,4 +200,8 @@ img {
     color: #96A2AA;
     white-space: nowrap;
     transform: translateX(-50%)
+}
+
+.graph-mode-switch {
+    font-size:30px
 }
