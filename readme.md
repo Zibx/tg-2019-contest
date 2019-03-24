@@ -6,9 +6,9 @@
 
 - chart, graphic - colored segmented line
 - switch - checkbox (input control with two states)
-- dot - data item that can be drawn [x, y]
-- row - one data // TODO
-- time granule - slice of row data. An array of dots in some time period
+- dot - minimal amount of data (item that can be drawn) [time, value] [x, y]
+- row - all dots of the same group ordered by date
+- granule - slice of row - an array of dots in some time period
 
  
 ### 1) Make a plan of features
@@ -21,6 +21,21 @@ This step leads me to ~ this to do list
   - Navigation area
   - Display data switches
 ##### 2. Load given data format
+Contest data format is too strange. There is no logical reasons for passing chart data in this order, except minor raising of contest complexity.
+Suggested format should look this way:
+```json5
+{
+  time: [timestamp1, ..., timestampN],
+  rows: {
+    "#1": {
+        title: "Joined",
+        color: "#BEEF11"
+        val: [value1, ..., valueN]
+      }
+    "id": ...
+  }
+}
+```
 ##### 3. Make another dataset for performance\stress test. 
 
 There is no possibility to push performance to the limit with 100 dotted charts! So, lets make dataset with 7 data rows with 1 million dots in each!

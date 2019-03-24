@@ -205,21 +205,25 @@ img {
 .night .pcg-checkbox-wrapper {border-width: 2px;border-color: #344658; color:#fff}
 .night .pcg-checkbox__img-wrapper::after {background-color: #8ee}
 .night .pcg-y-axis {border-bottom-color: rgba(91, 107, 127, 0.3)}
-.night .pcg-y-axis-label, .night .pcg-x-axis-label {color: #5b6b7f; text-shadow: 2px 2px 0 #213040; opacity: 1}
+.night .pcg-y-axis-label, .night .pcg-x-axis-label {color: #5b6b7f; text-shadow: 2px 2px 0 #213040;}
 .night .graph-mode-switch {color: #1891ff}
 .night .pcg-tooltip {background-color: #1a2837; box-shadow: none;}
 .night .pcg-tooltip__date {color: #fff}
 .night .pcg-tooltip__vertical-slice {border-color: rgba(91, 107, 127, 0.9)}
 .night {background: #213040}
-.night .pcg-checkbox__img-wrapper {position: relative; width: 28px; height: 28px; background-color: #fff; border-radius: 50%; overflow: hidden;}
-.night .pcg-checkbox__img-wrapper svg {
+/*.night .pcg-checkbox__img-wrapper {position: relative; width: 28px; height: 28px; background-color: #fff; border-radius: 50%; overflow: hidden;}*/
+/*.night .pcg-checkbox__img-wrapper svg {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%)
-}
+}*/
 .night .pcg-checkbox__img-wrapper::after {
-    width: 24px;
-    height: 24px;
-    background-color: #213040;
+    /*width: 24px;*/
+    /*height: 24px;*/
+    /*background-color: #213040;*/
+}
+.night .pcg-y-axis-label {
+    color: #96A2AA;
+    text-shadow: 0 0 1px white, 0 0 1px white, 0 0 1px white;
 }
