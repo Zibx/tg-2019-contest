@@ -1,5 +1,6 @@
 (function(PCG){
     const D = PCG.D;
+    const XlabelSize = 45;
     PCG.updateYAxis = function updateYAxis(minMax, getY) {
         const hash = this.els.YAxisHash;
         const delta = Math.ceil(minMax.max)-Math.floor(minMax.min),
@@ -97,8 +98,12 @@
             }
         }
     };
+    let leftSetter = (left, width)=>{
+        return left/width*(width-XlabelSize)+XlabelSize/2;
+    };
     PCG.updateXAxis = function updateYAxis() {
-        D.removeChildren(this.els.xAxisLabelsStorage);
+
+        //D.removeChildren(this.els.xAxisLabelsStorage);
         const from = this.frame.from,
             to = this.frame.to,
             delta = to - from,
@@ -106,22 +111,87 @@
             bigBang = this.camera.offset,
             initialTimeOffset = bigBang % granule,
             spinOffTime = (from % granule) - initialTimeOffset;
-        let i, val, left, date;
-        for(i = 0; i < 7; i++){
-            val = from-spinOffTime+granule*i;
+
+
+        let i, val, left, date, item, _i;
+        const hash = this.els.XAxisHash,
+            usedHash = {},
+            now = +new Date();
+        let width = this.world.graph.width;
+        const step = this.camera.AxisXGranule;
+        for(i = from; i < to+step; i+=step){
+        //    val = from-spinOffTime+granule*i;
+            val = (this.camera.offset % this.camera.AxisXGranule) - (this.frame.from % this.camera.AxisXGranule)+i;
             left = this.getX(val);
+            /*if(left<10){
+                left = 10;
+            }
+            if(left>this.world.graph.width-20){
+                if(i<to)
+                    continue;
+                left = this.world.graph.width - 20
+            }*/
+            //val = this.xToTime(left)
             date = PCG.dateFormatter(val);
-            this.els.xAxisLabelsStorage.appendChild(
 
-                D.div({
-                    cls: 'pcg-x-axis-label',
-                    style: {
-                        left: left+'px'
-                    }
-                }, date)
-            );
+            usedHash[val] = true;
+
+            if(val in hash){
+                item = hash[val];
+                if(item.destroy !== false){
+                    item.destroy = false;
+                    item.label.classList.remove('hide');
+                    item.label.classList.add('visible');
+                }
+                if(item.visible === false){
+                    item.visible = true;
+                    item.label.classList.add('visible');
+                }
+                item.label.style.left = leftSetter(left,width) +'px';
+            }else{
+                if(this.XAxisLabelCount>40){
+                    continue;
+                }
+                item = hash[ val ] = {
+                    val: val,
+                    left: left,
+                    visible: false,
+                    destroy: false,
+                    label: D.div( {
+                        cls: 'pcg-x-axis-label',
+                        style: {
+                            left: leftSetter(left,width) + 'px'
+                        },
+                        renderTo: this.els.xAxisLabelsStorage
+                    }, date )
+                };
+                this.XAxisLabelCount++;
+            }
+
         }
+        const xAxisLabelsStorage = this.els.xAxisLabelsStorage;
 
-        console.log(bigBang)
+        for(val in hash){
+
+            if(!(val in usedHash)){
+                item = hash[val];
+                let left = this.getX(item.val);
+                item.label.style.left = leftSetter(left,width)+'px';
+                if(item.destroy === false){
+                    item.destroy = now + 400;
+                    item.label.classList.add('hide');
+                    item.label.classList.remove('visible');
+                } else {
+                    if(item.destroy<now){
+                        xAxisLabelsStorage.removeChild(item.label);
+                        delete hash[val];
+                        this.XAxisLabelCount--;
+                    }else{
+                        this.update();
+                    }
+                }
+            }
+        }
+        //console.log(bigBang)
     };
 })(window['PCG']);

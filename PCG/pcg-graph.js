@@ -9,7 +9,12 @@
 
         let minMax = this._getMinMax( limits.from, limits.to );
         if(this.camera === null){
-            this.camera = {minMax: minMax, offset: this.data[0][0]};
+            let day = 1000*60*60*24;
+            this.camera = {
+                minMax: minMax,
+                offset: this.data[0][0],
+                AxisXGranule: day * Math.pow(2,Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)))
+            };
         }else{
             if(Math.abs(this.camera.minMax.max - minMax.max)>0.01) {
                 this.update();
@@ -98,7 +103,7 @@
                 oddList.length = 0;
             }
         }
-        console.log('Dots:', drawedDots);
+        //console.log('Dots:', drawedDots);
         const graphStrokeWidth = this.consts.graphStrokeWidth;
         for( j = 0, _j = svgData.length; j < _j; j++ ){
             const graph = D.path({

@@ -39,8 +39,9 @@
             YAxis: [],
             YAxisLabels: [],*/
 
-            XAxis: []
+            XAxisHash: {}
         };
+        this.XAxisLabelCount = 0;
         this.els.tooltip.appendChild(this.els.tooltipDate);
         this.els.tooltip.appendChild(this.els.tooltipInfo);
 
@@ -62,6 +63,13 @@
             let point = [e.clientX, e.clientY];
             let moved = pxToTime(point[0]-start[0]);
             if(toLeft){
+                const from = this.frame.from,
+                    to = this.frame.to,
+                    delta = to - from,
+                    granule = delta / 6,
+                    spinOffTime = ((from) % granule) - (this.camera.offset % granule);
+                let val0 = from-spinOffTime+granule * 6;
+
                 frame.from = startFrame+moved;
                 if(frame.from>frame.to-pxToTime(resizeOffset*1.3)){
                     frame.from = frame.to - pxToTime( resizeOffset*1.3 );
@@ -69,7 +77,8 @@
                 if(frame.from< this.minDate){
                     frame.from = this.minDate;
                 }
-                this.camera.offset = frame.from;
+
+                this.camera.offset = frame.to;
             }else{
                 frame.to = startFrame+frameWidth+moved;
                 if(frame.to<frame.from+pxToTime(resizeOffset*1.3)){
@@ -78,11 +87,21 @@
                 if(frame.to > this.maxDate){
                     frame.to = this.maxDate;
                 }
-                this.camera.offset = frame.to;
+
+                /*let val = (this.camera.offset % this.camera.AxisXGranule) - (this.frame.from % this.camera.AxisXGranule)+this.frame.from;
+                let left = this.getX(val);
+                let unLeft = this.xToTime(left);
+*/
+                this.camera.offset = frame.from;//unLeft;
             }
             this.camera.action = 'resize';
             this.camera.toLeft = toLeft;
 
+
+            let day = 1000*60*60*24;
+
+
+            this.camera.AxisXGranule = day * Math.pow(2, Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)));
             this.update();
         };
         const touchMove = (e)=>{
@@ -164,7 +183,7 @@
                     frame.from = frame.to - frameWidth;
                 }
                 this.update();
-
+                e.cancelable && e.preventDefault();
             };
             const up = () => {
                 window.removeEventListener( 'mouseup', up );

@@ -16,7 +16,7 @@
             navigationGraphStrokeWidth: 1.5,
             graphStrokeWidth: 3,
             LOG2: Math.log( 2 ),
-            resizeOffset: 60
+            resizeOffset: 40
         },
         formatters: {
             date: PCG.dateFormatter,

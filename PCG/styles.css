@@ -3,12 +3,13 @@ body {
     padding: 0;
     font-family: sans-serif;
     font-size: 20px;
+    overflow-x: hidden;
 }
 .graph {
     height: 470px;
     margin-bottom: 10px;
     /*background: #4b4b4b;*/
-    overflow: hidden;
+
 }
 .graph-nav {
     height: 57px;
@@ -123,20 +124,30 @@ H1 {
     transition: top, opacity ease-in 0.1s;
 }
 .pcg-y-axis-label {
-    position: absolute;
-    font-size: 15px;
     left: 1px;
-    color: #96A2AA;
-    text-shadow: 0 0 1px white, 0 0 1px white, 0 0 1px white;
-    transition: bottom, opacity ease-in 0.1s;
-    opacity: 0.3;
 }
-.pcg-y-axis.hide, .pcg-y-axis-label.hide {
+.pcg-y-axis.hide, .pcg-y-axis-label.hide, .pcg-x-axis-label.hide {
     opacity: 0;
 }
-.pcg-y-axis.visible, .pcg-y-axis-label.visible {
+.pcg-y-axis.visible, .pcg-y-axis-label.visible, .pcg-x-axis-label.visible {
     opacity: 1;
 }
+
+.pcg-x-axis-label {
+    bottom: 10px;
+    transform: translateX(-50%);
+
+}
+.pcg-x-axis-label, .pcg-y-axis-label {
+    position: absolute;
+    font-size: 15px;
+    color: #96A2AA;
+    text-shadow: 0 0 1px white, 0 0 1px white, 0 0 1px white;
+    white-space: nowrap;
+    transition: bottom, left, opacity ease-in 0.1s;
+    opacity: 0.3;
+}
+
 img {
     position: absolute;
     top: -140px;
@@ -185,14 +196,7 @@ img {
     border-left: 2px solid #ECF0F3;
     display: none;
 }
-.pcg-x-axis-label {
-    position: absolute;
-    bottom: 10px;
-    font-size: 15px;
-    color: #96A2AA;
-    white-space: nowrap;
-    transform: translateX(-50%)
-}
+
 
 .graph-mode-switch {
     font-size:30px
