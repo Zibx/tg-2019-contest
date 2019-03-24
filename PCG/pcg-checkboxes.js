@@ -7,7 +7,7 @@
                     .filter( el => el.show )
                     .map( el => el.i );
                 this.update();
-                this.updateNav();
+                this.navGraphUpdateVisibility();
             };
 
         while( switchesEl.childNodes.length ){

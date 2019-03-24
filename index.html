@@ -25,7 +25,7 @@
         <div class="graph"></div>
         <div class="graph-nav"></div>
         <div class="graph-switches"></div>
-        <div class="graph-mode-switch" onclick="this.parentNode.classList.toggle('night');var span = this.querySelector('span'); span.innerText = span.innerText === 'Night'?'Day':'Night';">Switch to <span>Night</span> Mode</div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
     </div>
     <!--<img src="sample.png"/>-->
     <!-- load hardcoded test data -->
@@ -55,7 +55,16 @@
         });
 
         graph.load(data[1]);
-        window.addEventListener('resize', graph.resize)
+        window.addEventListener('resize', graph.resize);
+
+        [].slice.call(document.querySelectorAll('.graph-mode-switch')).forEach(function(el) {
+            el.addEventListener('click', function(e) {
+                this.parentNode.classList.toggle('night');
+                var span = this.querySelector('span');
+                span.innerText = span.innerText === 'Night'?'Day':'Night';
+                e.preventDefault();
+            });
+        })
     </script>
 </body>
 </html>

@@ -6,7 +6,7 @@
         const updateNavID = this.updateNavID = Math.random().toString(36).substr(2);
 
 
-        const minMax = this._getMinMax( 0, this.data.length - 1 );
+        //const minMax = this._getMinMax( 0, this.data.length - 1 );
 
         if( !this.world ){
             this.collectWorldInfo();
@@ -30,14 +30,20 @@
 
 
         const getX = ( time ) => (( time - minDate ) / momentumDelta * previewWidth)|0;
-        const getY = ( val ) => (previewHeight - ( val - minMax.min ) / minMax.delta * previewHeight)|0;
 
 
-        const svgData = this._all.map( ( id, i ) => [
-            [ 0, getY( data[ 0 ][ i + 1 ] ) ]
-        ] );
+
+
 
         let i = 1, _i = data.length, sliceSum = this._all.map(()=>0), sliceSumCount = 0;
+        let minMaxes = [];
+        for( let j = 0, _j = all.length; j < _j; j++ ){
+            minMaxes[j] = {min:Infinity, max: -Infinity};
+        }
+
+        const svgData = this._all.map( ( id, i ) => [
+            [ 0, data[ 0 ][ i + 1 ] ]
+        ] );
         const next = ()=>{
             if(updateNavID !== this.updateNavID)
                 return;
@@ -46,15 +52,24 @@
 
                 // granular aggregate
                 for( let j = 0, _j = all.length; j < _j; j++ ){
-                    sliceSum[ j ]+=slice[ j + 1 ];
+                    let mm = minMaxes[ j ],
+                        valJ = slice[ j + 1 ];
+                    if(valJ>mm.max){
+                        mm.max = valJ;
+                    }
+                    if(valJ<mm.min){
+                        mm.min = valJ;
+                    }
+                    sliceSum[ j ]+=valJ;
                 }
                 sliceSumCount++;
 
                 if( slice[ 0 ] - lastDate >= momentumInGranule ){
                     const x = getX( slice[ 0 ] );
                     for( let j = 0, _j = all.length; j < _j; j++ ){
+
                         // draw median
-                        svgData[ j ].push( [ x, getY( sliceSum[ j ]/sliceSumCount ) ] );
+                        svgData[ j ].push( [ x,  sliceSum[ j ]/sliceSumCount ] );
                     }
                     lastDate = slice[ 0 ];
                     sliceSum = this._all.map(()=>0);
@@ -66,21 +81,25 @@
                 setTimeout( next, 1 );
             }else{
                 let graph;
+                //D.removeChildren(this.els.nav);
                 while( ( graph = this.els.navGraphs.pop() ) ){
                     this.els.nav.removeChild( graph );
                 }
+                this.minMaxes = minMaxes;
                 for( let j = 0, _j = svgData.length; j < _j; j++ ){
+                    let minMax = minMaxes[j];
+                    const getY = ( val ) => (previewHeight - ( val - 0 ) / minMax.max * previewHeight)|0;
                     graph = D.path({
+                        renderTo: this.els.nav,
                         attr: {
                             stroke: this.colors[ this.columns[ all[ j ] ] ],
                             'stroke-width': navigationGraphStrokeWidth,
                             fill: 'none',
-                            d: 'M ' + svgData[ j ].map( ( point ) => point.join( ' ' ) ).join( ' L ' )
+                            d: 'M ' + svgData[ j ].map( ( point ) => point[0]+' '+getY(point[1]) ).join( ' L ' )
                         }
                     });
 
                     this.els.navGraphs.push( graph );
-                    this.els.nav.appendChild( graph );
                 }
                 this.navGraphUpdateVisibility();
             }
@@ -117,8 +136,28 @@
     };
     PCG.navGraphUpdateVisibility = function navGraphUpdateVisibility() {
         const visible = this._getVisible();
+        const visibleMinMax = {min: Infinity, max: -Infinity},
+            minMaxes = this.minMaxes;
         this.els.navGraphs.forEach((el, i)=>{
-            el.style.visibility = visible.indexOf(i)===-1? 'hidden':'visible';
+            if(visible.indexOf(i)===-1){
+                el.classList.add( 'hidden' );
+            }else{
+                el.classList.remove( 'hidden' );
+                if(minMaxes[i].min<visibleMinMax.min){
+                    visibleMinMax.min = minMaxes[i].min;
+                }
+                if(minMaxes[i].max>visibleMinMax.max){
+                    visibleMinMax.max = minMaxes[i].max;
+                }
+            }
+        });
+        visibleMinMax.min = 0;
+        visibleMinMax.delta = visibleMinMax.max;
+        this.els.navGraphs.forEach((el, i)=>{
+            if(visible.indexOf(i)!==-1){
+                let percent = minMaxes[i].max/(visibleMinMax.max*1.1);
+                el.style.transform = 'translateY('+ (this.world.nav.height*(1-percent))+'px) scaleY('+(percent)+')'
+            }
         });
     }
 })(window['PCG']);

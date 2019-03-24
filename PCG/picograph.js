@@ -82,6 +82,37 @@
 
             this.update();
         },
+        _getMinMaxRow: function( from, to, row ){
+            const data = this.data;
+            let min = Infinity,
+                max = -Infinity,
+
+                i, j,
+
+                slice, point;
+
+            const visible = this._getVisible();
+            const visibleCount = visible.length;
+
+            for( i = from; i <= to; i++ ){
+                slice = data[ i ];
+                point = slice[ row + 1 ];
+                if( point < min ){
+                    min = point;
+                }
+                if( point > max ){
+                    max = point;
+                }
+            }
+
+            min = 0;
+            max *= 1.05;
+            const delta = ( max - min );
+            if(max===-Infinity){
+                return this.camera.minMax;
+            }
+            return { min, max, delta: delta };
+        },
         _getMinMax: function( from, to ){
             const data = this.data;
             let min = Infinity,
@@ -183,7 +214,6 @@
                 name = this.columns[ visible[ i ] ];
                 this.els.highlightCircles.push( D.circle( {
                     attr: {
-                        fill: '#fff',
                         stroke: this.colors[ name ],
                         cx: xPos,
                         cy: this.getY( val ),
