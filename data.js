@@ -31,7 +31,7 @@ window.data = [ {
             if(name === 'x')
                 arr.push(d+i*1000*60*20);
             else
-                arr.push(Math.random()*3+Math.sin(i/50*(j+1)/30+j)*4+10+j*i/1000000+j);
+                arr.push((Math.random()*3+Math.sin(i/50*(j+1)/30+j)*4+10+j*i/1000000+j).toFixed(3)-0);
         return arr;
     }),
     "types": { "y0": "line", "y1": "line", "y2": "line", "y3": "line", "y4": "line", "y5": "line", "y6": "line", "x": "x" },
@@ -61,7 +61,7 @@ window.data = [ {
                     Math.cos( ( 4 + j ) % i3 + Math.round( Math.cos( i3 / 17 + 1 ) * 25 ) + Math.round( Math.cos( i3 / 13 - j2 ) * 550 ) / 20 ) * 5 +
                     Math.sin( 7 * j2 + i3 / 50 * ( j + 1 ) / 30 + j ) * 4 + 10 + j * i / 1000000 +j+(j===1?-10:0);
                 var m = (n+l*4)/5;
-                arr.push( m );
+                arr.push( m.toFixed(2)-0 );
                 l = m;
             }
         }

@@ -208,7 +208,7 @@ circle {
 .night .graph-nav {background: #212f3f}
 .night .navWindow {border-color: rgba(91, 107, 127, 0.9)}
 .night .navEar {border-color: #250; background-color: rgba(25, 37, 52, 0.7)}
-.night .pcg-checkbox-wrapper {border-width: 2px;border-color: #344658; color:#fff}
+.night .pcg-checkbox-wrapper {border-width: 2px;border-color: #344658; color:#fff;    margin: 0 27px 25px 0;}
 .night .pcg-checkbox__img-wrapper::after {background-color: #212f3f}
 .night .pcg-y-axis {border-bottom-color: rgba(91, 107, 127, 0.3)}
 .night .pcg-y-axis-label, .night .pcg-x-axis-label {color: #5b6b7f; text-shadow: 2px 2px 0 #213040;}
@@ -243,4 +243,26 @@ path.hidden {
 }
 path {
     transition: transform ease-in 0.3s;
+}
+.graph-holder {
+    padding:20px;position: relative;overflow-x: hidden;
+    border-bottom: 1px solid #5b6b7f;
+}
+.credit {
+    padding: 30px
+}
+.article__open, .article__show {
+    cursor: pointer;
+    display: inline-block;
+    color: #1891ff;
+    font-size: 25px;
+    margin: 30px;
+    border-bottom: 1px dashed;
+}
+.article {
+    display: none;
+    padding: 30px;
+}
+.article.visible {
+    display: block;
 }
