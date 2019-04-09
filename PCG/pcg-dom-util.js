@@ -57,9 +57,10 @@
         label: null,
         div: null,
         path: null,
+        canvas: null,
         Text: ( val ) => document.createTextNode( val )
     };
-    'div,input,label'.split( ',' ).forEach( ( name ) => {
+    'div,input,label,canvas'.split( ',' ).forEach( ( name ) => {
         D[ name ] = ( ...args ) => {
             return domEl.apply( null, [ name, ...args ] )
         };

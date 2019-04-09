@@ -1,50 +1,7 @@
 (function(PCG){
     const D = PCG.D;
 
-
-    var filled = false
-    var fillit = function() {
-        filled = true
-        const chartData = [];
-        for(var i = 0; i < 3000; i++){
-            chartData.push(Math.sin(i/40));
-        }
-
-        const chartData2 = [];
-        for(var i = 0; i < 3000; i++){
-            chartData2.push(Math.sin(i/304+Math.cos(i/13)));
-        }
-
-        const chartData3 = [];
-        for(var i = 0; i < 300; i++){
-            chartData3.push(Math.sin(i/10 * Math.cos(i/342)-22)/1.15);
-        }
-        this.GL.clear();
-        //this.GL.polyLine(chartData, 0.005, '#f08d46');
-        //this.GL.polyLine(chartData2, 0.005, '#f025b6');
-        //debugger
-
-        this.GL.polyLine(chartData3, 63/this.GL.w*2, '#59aff0');
-    };
-
-    PCG.updateGraph = function updateGraph(){
-
-        //var gl = this.graphGL;
-        //var canvas = this.els.graph;
-
-if(!filled)
-    fillit.call(this);
-
-        this.GL.render();
-
-        requestAnimationFrame(()=>{this.updateGraph()})
-
-        //this.GL.draw({v: vertices, i: indices});
-
-
-    };
-    var x = function(){
-        return;
+    PCG.updateGraph = function updateGraph() {
         const limits = {
                 from: this._binarySearch(this.frame.from)-1,
                 to: this._binarySearch(this.frame.to)+1

@@ -23,7 +23,7 @@
 
             yAxisStorage: D.div({renderTo: around.graph}),
             verticalMouseSlice: D.div({cls: 'pcg-tooltip__vertical-slice', renderTo: around.graph}),
-            graph: D.canvas({renderTo: around.graph}),
+            graph: D.svg({renderTo: around.graph}),
             yAxisLabelsStorage: D.div({renderTo: around.graph}),
             xAxisLabelsStorage: D.div({renderTo: around.graph}),
 
@@ -39,8 +39,6 @@
             XAxisHash: {}
         };
 
-        //this.GL = new PCG.GL(this.els.graph);
-        this.ctx = new PCG.Canvas2d(this.els.graph);
 
         this.XAxisLabelCount = 0;
         this.els.tooltip.appendChild(this.els.tooltipDate);
