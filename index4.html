@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, minimal-ui, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Picograph</title>
+    <script src="PCG/base.js"></script>
+    <script src="PCG/pcg-util.js"></script>
+    <script src="PCG/pcg-canvas2d.js"></script>
+    <script src="PCG/pcg-ajax.js"></script>
+    <script src="PCG/pcg-dom-util.js"></script>
+    <script src="PCG/pcg-checkboxes.js"></script>
+    <script src="PCG/pcg-dom.js"></script>
+    <script src="PCG/pcg-navigation.js"></script>
+    <script src="PCG/pcg-formatters.js"></script>
+    <script src="PCG/pcg-graph.js"></script>
+    <script src="PCG/pcg-axis.js"></script>
+    <script src="PCG/picograph.js"></script>
+
+<!--<script src="build/build.js"></script>-->
+    <link href="PCG/styles.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h1>Contest. Stage 2</h1>
+    <div class="graph-holder">
+        <div class="title">Picograph 1</div>
+        <!-- It is a feature - you can spread different parts of graphic all over the page -->
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+
+
+    <div class="graph-holder">
+        <div class="title">Picograph 2</div>
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+
+    <div class="graph-holder">
+        <div class="title">Picograph 3</div>
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+
+    <div class="graph-holder">
+        <div class="title">Picograph 4</div>
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+
+    <div class="graph-holder">
+        <div class="title">Picograph 5</div>
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+    <div style="clear:both"></div>
+    <div class="credit"><a href="https://github.com/Zibx">Zibx</a>, April 2019</div>
+
+
+    <!-- load hardcoded test data -->
+    <script src="data.js"></script>
+
+    <script>
+        /*
+        PG - picograph. Init it with a config object
+            frame - {from: timestamp, to: timestamp} || {to: null, from: -deltaTime}
+            renderTo - specify all 3 elements to render parts of picograph:
+                graph div,
+                navigation div
+                switches div
+
+        You can restyle everything with css
+         */
+        var graphs = document.querySelectorAll('.graph'),
+            navs = document.querySelectorAll('.graph-nav'),
+            switches = document.querySelectorAll('.graph-switches'),
+            titles = document.querySelectorAll('.title');
+        for(var i = 0; i < 5; i++){
+            (function(i) {
+                var graph = new PCG( {
+                    dataSource: 'contest/'+(i+1),
+                    renderTo: {
+                        graph: graphs[i],
+                        nav: navs[i],
+                        switches: switches[i],
+                    },
+                    frame: {
+                        from: -1000 * 60 * 60 * 24 * 30, // month ago
+                        to: null
+                    }
+                } );
+
+
+                window.addEventListener( 'resize', graph.resize );
+            })(i);
+
+
+        }
+
+
+        [].slice.call(document.querySelectorAll('.graph-mode-switch')).forEach(function(el) {
+            el.addEventListener('click', function(e) {
+                this.parentNode.classList.toggle('night');
+                var span = this.querySelector('span');
+                span.innerText = span.innerText === 'Night'?'Day':'Night';
+                e.preventDefault();
+            });
+        });
+
+
+    </script>
+</body>
+</html>

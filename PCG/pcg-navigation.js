@@ -32,6 +32,7 @@
         const getX = ( time ) => (( time - minDate ) / momentumDelta * previewWidth)|0;
 
 
+        return;
 
 
 
@@ -118,8 +119,9 @@
             this.frame = {to: lastDate, from: lastDate+this.frame.from}
         }
 
-        const left = ((this.frame.from-minDate)/momentumDelta*this.world.nav.width)|0,
-            width = ((this.frame.to-this.frame.from)/momentumDelta*this.world.nav.width)|0;
+        const left = PCG.DPR*(((this.frame.from-minDate)/momentumDelta*this.world.nav.width)|0),
+            width = PCG.DPR*(((this.frame.to-this.frame.from)/momentumDelta*this.world.nav.width)|0);
+
 
         this.els.navWindow.style.left = left+'px';
         this.els.navWindow.style.width = width+'px';

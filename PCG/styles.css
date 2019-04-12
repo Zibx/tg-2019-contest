@@ -6,17 +6,25 @@ body {
 
 }
 .graph {
-    height: 470px;
+    height: 285px;
     margin-bottom: 10px;
 }
+
+.graph {
+    height: 359px;
+}
+
+
 .graph-nav {
-    height: 57px;
+    height: 50px;
     background: #ffffff;
+    border-radius: 30px;
+}
+.graph {
+    margin: 0 -20px;
 }
 .graph-nav, .graph {
-    width: 100%;
     position: relative;
-
 }
 .graph-switches {
     display: flex;
@@ -51,6 +59,15 @@ H1 {
     bottom: 0;
 }
 
+.navEar-left {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+.navEar-right {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
 
 
 .pcg-nav__move-control, .pcg-nav__expand-control {
@@ -118,14 +135,16 @@ H1 {
 }
 
 .pcg-y-axis {
+    pointer-events: none;
     position: absolute;
-    width: 100%;
-    border-bottom: 1px solid #ECF0F3;
+    left: 20px;
+    right: 20px;
+    border-bottom: 1px solid #182d3b0a;
     height: 0;
     transition: top, opacity ease-in 0.1s;
 }
 .pcg-y-axis-label {
-    left: 1px;
+    left: 21px;
 }
 .pcg-y-axis.hide, .pcg-y-axis-label.hide, .pcg-x-axis-label.hide {
     opacity: 0;
@@ -137,13 +156,13 @@ H1 {
 .pcg-x-axis-label {
     bottom: 10px;
     transform: translateX(-50%);
-
 }
 .pcg-x-axis-label, .pcg-y-axis-label {
+    pointer-events: none;
     position: absolute;
     font-size: 15px;
     color: #96A2AA;
-    text-shadow: 0 0 1px white, 0 0 1px white, 0 0 1px white;
+    /*text-shadow: 0 0 1px white, 0 0 1px white, 0 0 1px white;*/
     white-space: nowrap;
     transition: bottom, left, opacity ease-in 0.1s;
     opacity: 0.3;
@@ -156,7 +175,7 @@ img {
     z-index: -1;
 }
 .title {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
     margin: 4px 6px;
 }
@@ -170,7 +189,7 @@ img {
     display: none;
 }
 .pcg-tooltip__date {
-    font-size: 17px;
+    font-size: 12px;
     font-weight: bold;
 }
 .pcg-tooltip__info {
@@ -178,12 +197,12 @@ img {
 }
 .pcg-tooltip__info-item__count {
     font-weight: bold;
-    font-size: 22px;
+    font-size: 14px;
     margin: 11px 0 0;
 }
 .pcg-tooltip__info-item {
     flex: none;
-    font-size: 15px;
+    font-size: 10px;
     padding-right: 27px;
 }
 .pcg-tooltip__info .pcg-tooltip__info-item:last-child {
@@ -191,16 +210,18 @@ img {
 }
 
 .pcg-tooltip__vertical-slice {
+    pointer-events: none;
     position: absolute;
     top: 0;
     bottom: 40px;
-    border-left: 2px solid #ECF0F3;
+    border-left: 2px solid #182d3b0a;
     display: none;
 }
 
 
 .graph-mode-switch {
-    font-size:30px
+    font-size:30px;
+    text-align: center;
 }
 circle {
     fill: #fff;
@@ -249,9 +270,37 @@ path {
     transition: transform ease-in 0.3s;
 }
 .graph-holder {
-    padding:20px;position: relative;overflow-x: hidden;
-    border-bottom: 1px solid #5b6b7f;
+    padding:20px;
+    position: relative;
+    overflow-x: hidden;
+    /*border-bottom: 1px solid #5b6b7f;*/
 }
+
+
+.graph-holder {
+    box-sizing: border-box;
+    position: relative;
+    /*margin-bottom: 64px;*/
+    width: 100%;
+    margin: 0 auto 64px auto;
+    max-width: 500px;
+}
+
+@media (min-width: 748px) {
+    .graph-holder {
+        width: 50%;
+        float: left;
+    }
+}
+
+@media (min-width: 1004px) {
+    .graph-holder {
+        width: 33%;
+    }
+}
+
+
+
 .credit {
     padding: 30px
 }
@@ -269,4 +318,8 @@ path {
 }
 .article.visible {
     display: block;
+}
+
+.pcg-yAxisLabelsStorage, .pcg-xAxisLabelsStorage, .pcg-yAxisStorage {
+    display: none;
 }

@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,user-scalable=no">
+
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, minimal-ui, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <title>Picograph</title>
     <script src="PCG/base.js"></script>
+    <script src="PCG/pcg-util.js"></script>
+    <script src="PCG/pcg-canvas2d.js"></script>
+    <script src="PCG/pcg-ajax.js"></script>
     <script src="PCG/pcg-dom-util.js"></script>
     <script src="PCG/pcg-checkboxes.js"></script>
     <script src="PCG/pcg-dom.js"></script>
@@ -18,7 +24,7 @@
     <link href="PCG/styles.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <div class="article__open">How to build a good chart plotting library</div>
+    <!--<div class="article__open">How to build a good chart plotting library</div>-->
     <div class="article">
         <div id="doc" class="markdown-body container-fluid comment-enabled comment-open" style="position: relative;"><h4 class="part"><a class="anchor hidden-xs" href="#JS-Telegram-2019-March-Contest" title="JS-Telegram-2019-March-Contest" ><span class="octicon octicon-link"></span></a><em>JS Telegram 2019 March Contest</em></h4><h1 class="part"><a class="anchor hidden-xs" href="#How-to-make-a-good-chart-plotting-library" title="How-to-make-a-good-chart-plotting-library" ><span class="octicon octicon-link"></span></a>How to make a good chart plotting library</h1><h2 class="part"><a class="anchor hidden-xs" href="#A-Make-a-list-of-features" title="A-Make-a-list-of-features" ><span class="octicon octicon-link"></span></a>A) Make a list of features</h2><p class="part">Write down the full list of features that you are going to implement and take a break to think about architecture. It is a good practice for building anything larger than <code>hello-world</code> app.</p><h3 class="part"><a class="anchor hidden-xs" href="#1-Split-layout-into-3-parts" title="1-Split-layout-into-3-parts" ><span class="octicon octicon-link"></span></a>1. Split layout into 3 parts:</h3><ul class="part">
             <li>Main chart area</li>
@@ -136,7 +142,7 @@
 
 
     <!-- load hardcoded test data -->
-    <script src="data.js"></script>
+    <!--<script src="data.js"></script>-->
 
     <script>
         /*
@@ -154,20 +160,25 @@
             switches = document.querySelectorAll('.graph-switches'),
             titles = document.querySelectorAll('.title');
         for(var i = 0; i < 5; i++){
-            var graph = new PCG( {
-                renderTo: {
-                    graph: graphs[i],
-                    nav: navs[i],
-                    switches: switches[i],
-                },
-                frame: {
-                    from: -1000 * 60 * 60 * 24 * 30, // month ago
-                    to: null
-                }
-            } );
+            (function(i) {
+                var graph = new PCG( {
+                    dataSource: 'contest/'+(i+1),
+                    renderTo: {
+                        graph: graphs[i],
+                        nav: navs[i],
+                        switches: switches[i],
+                    },
+                    frame: {
+                        from: -1000 * 60 * 60 * 24 * 30, // month ago
+                        to: null
+                    }
+                } );
 
-            graph.load( data[ i ] );
-            window.addEventListener( 'resize', graph.resize );
+
+                window.addEventListener( 'resize', graph.resize );
+            })(i);
+
+
         }
 
 
@@ -211,7 +222,7 @@
                 }
             } );
 
-            graph.load( data[ 6 ] );
+            graph.load( data[ 5 ] );
             window.addEventListener( 'resize', graph.resize );
 
 

@@ -2,6 +2,7 @@
     const D = PCG.D;
     const XlabelSize = 45;
     PCG.updateYAxis = function updateYAxis(minMax, getY) {
+        return
         const hash = this.els.YAxisHash;
         const delta = Math.ceil(minMax.max)-Math.floor(minMax.min),
             from = minMax.min;
@@ -27,6 +28,7 @@
         const graphHeight = this.world.graph.height;
         const offset = graphHeight + this.consts.XAxisHeight + this.consts.YAxisLabelPaddingBottom;
         const usedHash = {};
+
         for(i = 0; i < count; i++){
 
             const pos = getY(out[i]);
@@ -49,8 +51,11 @@
                         line.classList.add('visible');
                         label.classList.add('visible');
                     }
-                    line.style.top = pos + 'px';
-                    label.style.bottom = offset - pos  +'px';
+
+                    this.ctx.axisY(pos);
+
+                    /*line.style.top = pos + 'px';
+                    label.style.bottom = offset - pos  +'px';*/
                 }else{
                     hash[val] = {
                         val: val,
@@ -69,7 +74,8 @@
                             style: {bottom: offset - pos  +'px'}
                         }, PCG.numberFormat(out[ i ]) )
                     };
-                    requestAnimationFrame(()=>{})
+                    this.ctx.axisY(pos);
+
                 }
             }
         }
@@ -102,7 +108,7 @@
         return left/width*(width-XlabelSize)+XlabelSize/2;
     };
     PCG.updateXAxis = function updateYAxis() {
-
+        return
         //D.removeChildren(this.els.xAxisLabelsStorage);
         const from = this.frame.from,
             to = this.frame.to,

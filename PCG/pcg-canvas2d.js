@@ -73,8 +73,14 @@
 
     PCG.Canvas2d = function(canvas, cfg) {
         this.c = canvas;
-        this.ctx = this.c.getContext('2d');
+        this.tmp = document.createElement("canvas");
+        this.ctx = this.tmp.getContext('2d', {alpha:false});
+
+
+        this.ctxReal = this.c.getContext('2d', {alpha:false});
+        this.consts = cfg.constsDPR;
         this.init();
+
 
     };
     PCG.Canvas2d.prototype = {
@@ -85,170 +91,87 @@
             this.scene = [];
         },
         clear: function() {
-            this.scene.length = 0;
-        },
-        resize: function() {
-            const c = this.c;
-            this.w = c.width = c.clientWidth;
-            this.h = c.height = c.clientHeight;
-        },
-        polyLine: function(arr, width, color) {
-            this.scene.push()
+            //this.ctx.fillStyle = 'transparent';
+            //this.ctx.fillRect(0,0,this.w,this.h);
+            var h =(this.consts.graphicHeight+this.consts.graphicPadding)|0;
+            if(!this.imageData){
+                //this.ctx.clearRect(0,0,this.w,this.h);
+                this.ctx.fillStyle = '#fff';
+                this.ctx.fillRect(0,0,this.w,h);
+                this.imageData = this.ctx.getImageData(0,0,this.w,h);
 
-
-            const indices = [];//0,1,2,3,4];
-            const vertices =  [];
-
-            var chartData = arr;
-
-            var halfThick = width/2;
-            
-            
-            var _i = chartData.length,
-                p1 = new Point(-1, chartData[0]),
-                p2 = new Point(2/_i*(1)-1, chartData[1]),
-                p3 = new Point(2/_i*(2)-1, chartData[2]),
-                p4,
-                n1 = new Point(0,0),
-                n2 = new Point(0,0),
-
-                d = new Point(0,0),
-
-                m1 = new Point(0,0),
-                m2 = new Point(0,0)
-            ;
-
-            --_i;
-            var c=-1;
-            for( var i = 2; i < _i; i++ ){
-
-                n1.borrow(p3)
-                    .sub(p2)
-                    .normalize()
-                    .sub(
-                        n2.borrow(p1)
-                            .sub(p2)
-                            //.normalize()
-                    )
-                    .normalize()
-                    .mul(halfThick)
-                    .clone(d);
-
-                p2.clone(m1)
-                    .add(-d.y, d.x);
-
-                p2.clone(m2)
-                    .add(d.y, -d.x);
-
-                p4=p1;
-                p1=p2;
-                p2=p3;
-                p3=p4;
-                p3.x = 2/(_i+1)*(i+1)-1;
-                p3.y = chartData[i+1];
-
-                indices.push(++c,++c);
-
-                vertices.push(
-                    m1.x,m1.y,0
-                );
-                vertices.push(
-                    m2.x,m2.y,0
-                );
+            }else{
+                this.ctx.putImageData( this.imageData,0,0,0,0,this.w,h);
             }
-            this.scene.push({v: new Float32Array(vertices), i: new Uint16Array(indices), un: {u_clr: hex2float(color.substr(1))}});
+        },
+        /*clear: function() {
+            var h =(this.consts.graphicHeight+this.consts.graphicPadding)|0;
+            this.ctx.fillStyle = '#fff';
+            this.ctx.fillRect(0,0,this.w,h);
+        },*/
+        resize: function() {
+            const c = this.c,
+                tmp = this.tmp;
+            this.w = c.width = tmp.width = c.clientWidth*PCG.DPR;
+            this.h = c.height = c.clientHeight*PCG.DPR;
+            tmp.height = this.consts.graphicHeight;
+            this.imageData = null;
+        },
+        graph: function(time, arr, from, to, width, color) {
 
+            var ctx = this.ctx;
+            ctx.beginPath();
+            ctx.moveTo(time[from], arr[from]);
+            for(var i = from+1; i<=to; i++){
+                ctx.lineTo(time[i], arr[i])
+            }
+            ctx.stroke();
+            //ctx.stroke(new Path2D('M'+arr.slice(from,to).join('L')));
+            //new Path2D('M'+arr.join('L')));
+
+        },
+        bar: function(time, arr, from, to, width, color) {
+            var ctx = this.ctx;
+            ctx.beginPath();
+            var h = this.consts.graphicHeight;
+            ctx.moveTo(time[from], h);
+            ctx.lineTo(time[from], arr[from]);
+            for(var i = from+1; i<to; i++){
+                var last = i-1;
+                var middleX = ((time[last]+time[i])/2)|0;
+                ctx.lineTo(
+                    middleX,
+                    arr[last]
+                );
+                ctx.lineTo(
+                    middleX,
+                    arr[i]
+                );
+
+//                ctx.lineTo(time[i], arr[i])
+            }
+            ctx.lineTo(time[i], arr[i-1]);
+            ctx.lineTo(time[i], h);
+            ctx.fill();
+        },
+        axisY: function(pos) {
+            pos = (pos|0)+0.5;
+            this.ctx.strokeStyle = '#182d3b0a';
+            this.ctx.lineWidth= 1;
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.consts.paddingLeft, pos);
+            this.ctx.lineTo(this.w-this.consts.paddingRight, pos);
+            this.ctx.stroke();
         },
         render: function() {
-            var gl = this.gl;
-
-
-            // Vertex shader source code
-            var shaderProgram = this.programm;
-
-
-
-            // Use the combined shader program object
-            gl.useProgram( shaderProgram );
-            var u_clr = gl.getUniformLocation(shaderProgram, "u_clr");
-
-            /*======= Associating shaders to buffer objects =======*/
-
-
-
-
-            var coord = gl.getAttribLocation( shaderProgram, "coordinates" );
-
-            gl.enable( gl.DEPTH_TEST );
-
-            // Clear the color buffer bit
-            gl.clear( gl.COLOR_BUFFER_BIT );
-
-            // Set the view port
-            gl.viewport( 0, 0, this.w, this.h );
-            var vertex_buffer = gl.createBuffer();
-            var Index_Buffer = gl.createBuffer();
-            gl.bindBuffer( gl.ARRAY_BUFFER, vertex_buffer );
-            gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, Index_Buffer );
-
-            this.scene.forEach((obj)=>{
-                for(var i = 100; i<4400;i+=3){
-                    //obj.v[ i ]+=(Math.random()-0.5)/10;
-                    //obj.v[ i+1 ]+=(Math.random()-0.5)/10;
-                    obj.v[ i+2 ]+=(Math.random()-0.5)/1000;
-                }
-                gl.bufferData( gl.ARRAY_BUFFER, obj.v, gl.STATIC_DRAW );
-                gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, obj.i, gl.STATIC_DRAW );
-
-                // Bind vertex buffer object
-
-                gl.uniform4fv(u_clr, obj.un.u_clr);
-
-  //              gl.bindBuffer( gl.ARRAY_BUFFER, vertex_buffer );
-
-                // Bind index buffer object
-//                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, Index_Buffer );
-                gl.vertexAttribPointer( coord, 3, gl.FLOAT, false, 0, 0 );
-
-                gl.enableVertexAttribArray( coord );
-                gl.drawElements( gl.TRIANGLE_STRIP, obj.i.length, gl.UNSIGNED_SHORT, 0 );
-
-                //TRIANGLE_STRIP  LINE_STRIP
-
-                gl.uniform4fv(u_clr, [1,0.5,0,1]);
-                gl.drawElements( gl.LINE_STRIP, obj.i.length, gl.UNSIGNED_SHORT, 0 );
-
-//                gl.bindBuffer( gl.ARRAY_BUFFER, null );
-  //              gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
-
-            });
-            gl.bindBuffer( gl.ARRAY_BUFFER, null );
-            gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
-            gl.deleteBuffer(vertex_buffer);
-            gl.deleteBuffer(Index_Buffer);
-            /*================ Shaders ====================*/
-
-
-            //gl.uniform2fv(u_clr, [0.3,0.4,0.5,1]);
-
-            // Get the attribute location
-
-            // Point an attribute to the currently bound VBO
-
-            // Enable the attribute
-
-            /*=========Drawing the triangle===========*/
-
-            // Clear the canvas
-
-            // Enable the depth test
-
-
-            // Draw the triangle//TRIANGLE_STRIP  LINE_STRIP
-        },
-        predraw: function() {
-            this.bindFramebuffer();
-            this.setViewport(this.width * this.dpr, this.height * this.dpr);
+            /*var ctx = this.ctx;
+            this.scene.forEach(function(item) {
+                ctx.strokeStyle = item.color;
+                ctx.lineWidth = item.width;
+                ctx.lineJoin = 'round';
+                ctx.stroke(item.path);
+            });*/
+            this.ctxReal.drawImage(this.tmp,0,0)
         }
     };
 })(window['PCG']);

@@ -23,7 +23,7 @@ window.data = [ {
     "types": { "y0": "line", "y1": "line", "y2": "line", "y3": "line", "x": "x" },
     "names": { "y0": "#0", "y1": "#1", "y2": "#2", "y3": "#3" },
     "colors": { "y0": "#cb513a", "y1": "#73c03a", "y2": "#65b9ac", "y3": "#4682b4" }
-}, {
+}/*, {
     "columns": ['x','y0','y1','y2','y3','y4','y5','y6'].map((name,j)=>{
         const arr = [name];
         var d = +new Date()-1000*60*60*24*3000
@@ -78,4 +78,4 @@ window.data = [ {
         "y5": "#3e76b9",
         "y6": "#7d4fb4"
     }
-} ];
+} */];

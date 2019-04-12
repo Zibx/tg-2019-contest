@@ -2,168 +2,110 @@
     const D = PCG.D;
 
 
-    var filled = false
-    var fillit = function() {
-        filled = true
-        const chartData = [];
-        for(var i = 0; i < 3000; i++){
-            chartData.push(Math.sin(i/40));
-        }
-
-        const chartData2 = [];
-        for(var i = 0; i < 3000; i++){
-            chartData2.push(Math.sin(i/304+Math.cos(i/13)));
-        }
-
-        const chartData3 = [];
-        for(var i = 0; i < 300; i++){
-            chartData3.push(Math.sin(i/10 * Math.cos(i/342)-22)/1.15);
-        }
-        this.GL.clear();
-        //this.GL.polyLine(chartData, 0.005, '#f08d46');
-        //this.GL.polyLine(chartData2, 0.005, '#f025b6');
-        //debugger
-
-        this.GL.polyLine(chartData3, 63/this.GL.w*2, '#59aff0');
-    };
 
     PCG.updateGraph = function updateGraph(){
+        var now = +new Date(),
+            dt = ((now - this.lastUpdate)|0)/1000;
+        if(dt>0.2)
+            dt = 0;
+        this.lastUpdate = now;
 
-        //var gl = this.graphGL;
-        //var canvas = this.els.graph;
-
-if(!filled)
-    fillit.call(this);
-
-        this.GL.render();
-
-        requestAnimationFrame(()=>{this.updateGraph()})
-
-        //this.GL.draw({v: vertices, i: indices});
-
-
-    };
-    var x = function(){
-        return;
-        const limits = {
+        /*const limits = {
                 from: this._binarySearch(this.frame.from)-1,
                 to: this._binarySearch(this.frame.to)+1
             };
 
-        let minMax = this._getMinMax( limits.from, limits.to );
-        if(this.camera === null){
-            let day = 1000*60*60*24;
-            this.camera = {
-                minMax: minMax,
-                offset: this.data[0][0],
-                AxisXGranule: day * Math.pow(2,Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)))
-            };
-        }else{
-            if(Math.abs(this.camera.minMax.max - minMax.max)>0.01) {
-                this.update();
-            }
-
-            minMax.max = (this.camera.minMax.max*5 + minMax.max)/6;
-            minMax.delta = minMax.max - minMax.min;
-            this.camera.minMax = minMax;
-        }
+        let minMax = this._getMinMax( limits.from, limits.to );*/
 
 
-        const maxDotsCount = this.world.graph.width / this.consts.graphPxPerDot,
-            minDate = this.frame.from,
+
+        var minDate = this.frame.from,
             momentumDelta = ( this.frame.to - minDate ),
-            momentumInGranule = momentumDelta / maxDotsCount,
             data = this.data,
             visible = this._getVisible(),
 
             width = this.world.graph.width,
-            height = this.world.graph.height,
-
-            getX = this.getX = ( time ) => (( time - minDate ) / momentumDelta * width)|0,
-            getY = this.getY = ( val ) => (height - ( val - minMax.min ) / minMax.delta * height)|0,
-            xToTime = this.xToTime = (x)=>x/width*momentumDelta+minDate,
-            svgData = visible.map( ( id, i ) => [
-                [ getX(data[limits.from][0]), getY( data[ limits.from ][ visible[ i ] + 1 ] ) ]
-            ] );
-
-        this.updateYAxis(minMax, getY);
 
 
-        let lastDate = data[ limits.from ][ 0 ],
-            lastSlice = data[limits.from],
-            graph,
-            i, _i, j, _j, k, _k, slice;
+            momentumRatio = width/momentumDelta,
 
-        while( ( graph = this.els.graphs.pop() ) ){
-            this.els.graph.removeChild( graph );
+            getX = this.getX = function( time ){return (( time - minDate ) *momentumRatio)|0;};
+
+
+        var minMaxes = this.minMaxes;
+
+
+        var i, _i, j, _j, k, _k,v,_v, slice;
+
+        _v = visible.length;
+        _k = this.columns.length;
+        var raw = this.rawData,
+            timeLine = this.timeline;
+
+        const limits = {
+            from: this._binarySearch(this.frame.from)-1,
+            to: this._binarySearch(this.frame.to)+1
+        };
+
+        var minMaxesLocal = this._getMinMax(limits.from, limits.to);
+        this.updateCameraY(minMaxesLocal, dt);
+
+
+        var /*getY = this.getY = function( val ){return (height - ( val - minMax.min ) / minMax.delta * height);},
+            xToTime = this.xToTime = (x)=>x/width*momentumDelta+minDate,*/
+            cache = this.graphCache;
+
+
+
+        this.ctx.clear();
+
+
+        var graphTimeLine = this.graphTimeLine;
+
+        for( i = limits.from, _i = limits.to; i <= _i; i++ ){
+            graphTimeLine[ i ] = ( ( timeLine[i] - minDate ) * momentumRatio ) | 0;
         }
-        let drawedDots = 0;
-        // how can we see a tiny spike on the graph?
-        // Usually graphs are used to visualize collected data and to investigate anomalies, so I have to follow rule:
-        // - give priority to odd points
-        // oddList is redundant. TODO: optimize
-        let oddList = [];
-        let lastDot = visible.map(()=>-Infinity);
-        for( i = limits.from+1, _i = limits.to; i <= _i; i++ ){
-            slice = data[ i ];
-            oddList.push(slice);
-            if( slice[ 0 ] - lastDate >= momentumInGranule){
-                _j = oddList.length;
-                let tDiff = oddList[_j-1][0] - oddList[0][0]-0.01,
-                    centerTime = (oddList[_j-1][0] + oddList[0][0])/2,
-                    startTime = oddList[0][0],
-                    midValue,
-                    dataRow,
-                    dt, dv, dt2dv2, maxDt2dv2, maxSlice;
-                for( k = 0, _k = visible.length; k < _k; k++ ){
-                    midValue = 0;
-                    dataRow = visible[ k ] + 1;
-                    for( j = 0; j < _j; j++ ){
-                        midValue += oddList[j][dataRow];
-                    }
-                    midValue /= _j;
-                    maxDt2dv2 = -1;
-                    for( j = 0; j < _j; j++ ){
-                        dt = (oddList[j][0]-startTime)/(tDiff);
-                        dv = midValue - oddList[j][dataRow];
-                        dt2dv2 = Math.abs(dt)*Math.abs(dv);
-                        if(dt2dv2>maxDt2dv2){
-                            maxDt2dv2 = dt2dv2;
-                            maxSlice = oddList[j];
-                        }
-                    }
-                    const x = getX( maxSlice[ 0 ] );
-                    drawedDots++;
-                    if(lastDot[k]<x){
-                        lastDot[ k ] = x;
-                        svgData[ k ].push( [ x, getY( maxSlice[ dataRow ] ) ] );
-                    }
-                }
 
-                lastDate = slice[ 0 ];
-                lastSlice = slice;
-                i-=(oddList.length/3)|0;
-                oddList.length = 0;
+        this.updateGraphData(limits);
+
+
+
+
+        const graphStrokeWidth = this.constsDPR.graphStrokeWidth;
+
+        var ctx = this.ctx.ctx;
+
+        ctx.lineWidth = graphStrokeWidth;
+        ctx.lineJoin = 'bevel';
+
+        if(this.stacked){
+            for(v=_v-1; v>=0; v--){
+                var type = this.types[this.columns[visible[v]]];
+                if(type==='bar'){
+                    ctx.fillStyle = this.colors[ this.columns[ visible[ v ] ] ];
+                    this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+                }
+            }
+        }else{
+            for( v = 0; v < _v; v++ ){
+                var type = this.types[ this.columns[ visible[ v ] ] ];
+                if( type === 'line' ){
+                    ctx.strokeStyle = this.colors[ this.columns[ visible[ v ] ] ];
+                    this.ctx.graph( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+                }else if( type === 'bar' ){
+                    ctx.fillStyle = this.colors[ this.columns[ visible[ v ] ] ];
+                    this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+                }
             }
         }
-        //console.log('Dots:', drawedDots);
-        const graphStrokeWidth = this.consts.graphStrokeWidth;
-        for( j = 0, _j = svgData.length; j < _j; j++ ){
-            const graph = D.path({
-                attr: {
-                    stroke: this.colors[ this.columns[ visible[ j ] ] ],
-                    'stroke-width': graphStrokeWidth,
-                    'stroke-linejoin': 'round',
-                    fill: 'none',
-                    d: 'M ' + svgData[ j ].map( ( point ) => point.join( ' ' ) ).join( ' L ' )
-                }
-            });
 
-            this.els.graphs.push( graph );
-            this.els.graph.appendChild( graph );
-        }
 
+        //this.ctx.render();
+        this.updateYAxis();
         this.updateXAxis();
+        this.ctx.render();
+       // requestAnimationFrame(()=>{this.updateGraph()})
+
 
     };
 })(window['PCG']);
