@@ -130,6 +130,22 @@
             //new Path2D('M'+arr.join('L')));
 
         },
+        area: function(time, arr, from, to, width, color) {
+
+            var ctx = this.ctx;
+            var h = this.consts.graphicHeight;
+
+            ctx.beginPath();
+            ctx.moveTo(time[from], h);
+            ctx.lineTo(time[from], arr[from]);
+            for(var i = from+1; i<=to; i++){
+                ctx.lineTo(time[i], arr[i])
+            }
+            ctx.moveTo(time[i-1], h);
+
+            ctx.fill();
+
+        },
         bar: function(time, arr, from, to, width, color) {
             var ctx = this.ctx;
             ctx.beginPath();

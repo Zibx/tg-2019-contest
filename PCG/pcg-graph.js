@@ -78,29 +78,35 @@
         ctx.lineWidth = graphStrokeWidth;
         ctx.lineJoin = 'bevel';
 
-        if(this.stacked){
-            for(v=_v-1; v>=0; v--){
-                var type = this.types[this.columns[visible[v]]];
-                if(type==='bar'){
-                    ctx.fillStyle = this.colors[ this.columns[ visible[ v ] ] ];
-                    this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
-                }
+
+        var vStep;
+        if(this.stacked) {
+            v = _v - 1;
+            vStep = -1;
+        }else {
+            v = 0;
+            vStep = 1;
+        }
+
+        for( ;; v+=vStep ){
+            if(this.stacked){
+                if(v<0)break;
+            }else{
+                if(v>=_v)break;
             }
-        }else{
-            for( v = 0; v < _v; v++ ){
-                var type = this.types[ this.columns[ visible[ v ] ] ];
-                if( type === 'line' ){
-                    ctx.strokeStyle = this.colors[ this.columns[ visible[ v ] ] ];
-                    this.ctx.graph( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
-                }else if( type === 'bar' ){
-                    ctx.fillStyle = this.colors[ this.columns[ visible[ v ] ] ];
-                    this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
-                }
+            var type = this.types[ this.columns[ visible[ v ] ] ];
+            if( type === 'line' ){
+                ctx.strokeStyle = this.colors[ this.columns[ visible[ v ] ] ];
+                this.ctx.graph( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+            }else if( type === 'bar' ){
+                ctx.fillStyle = this.colors[ this.columns[ visible[ v ] ] ];
+                this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+            }else if( type === 'area'){
+                ctx.fillStyle = this.colors[ this.columns[ visible[ v ] ] ];
+                this.ctx.area( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
             }
         }
 
-
-        //this.ctx.render();
         this.updateYAxis();
         this.updateXAxis();
         this.ctx.render();
