@@ -1,21 +1,15 @@
 (function(PCG){
-    const D = PCG.D;
+    var D = PCG.D;
     PCG.initCheckboxes = function initCheckboxes(){
-        const switchesEl = this.renderTo.switches,
-            updateVisible = () => {
-                this._visible = list
-                    .filter( el => el.show )
-                    .map( el => el.i );
-                this.update();
-                this.navGraphUpdateVisibility();
-            };
+        var _self = this,
+            switchesEl = this.renderTo.switches;
 
         while( switchesEl.childNodes.length ){
             switchesEl.removeChild( switchesEl.lastChild );
         }
         let list = [];
-        this.columns.forEach( ( name, i ) => {
-            const dataRow = { name: name, show: true, i: i };
+        this.columns.forEach( function( name, i ){
+            var dataRow = { name: name, show: true, i: i, opacity: 1 };
             list.push( dataRow );
             D.label( {
                     cls: 'pcg-checkbox-wrapper',
@@ -27,8 +21,19 @@
                     attr: { type: 'checkbox', checked: true },
                     on: {
                         change: ( e ) => {
-                            list[ i ].show = e.target.checked;
-                            updateVisible();
+                            if(e.target.checked === false && _self._visible.length === 1){
+                                e.target.checked = true;
+                                setTimeout(function() {
+                                    e.target.checked = true
+                                },0);
+                                e.target.classList.add('error-checkbox');
+                                setTimeout(function() {
+                                    e.target.classList.remove('error-checkbox');
+                                }, _self.animation.lastCheckboxShake);
+                            }else{
+                                list[ i ].show = e.target.checked;
+                                _self.updateVisible();
+                            }
                             e.preventDefault();
                         }
                     }
@@ -39,7 +44,7 @@
                             attr: {
                                 viewBox: "0 0 30 30",
                             },
-                            style: { fill: this.colors[ name ] }
+                            style: { fill: _self.getColor(name, 1)  }
                         },
                         D.path( {
 
@@ -54,11 +59,11 @@
                         } )
                     )
                 ),
-                this.names[ name ]
+                _self.names[ name ]
             );
 
         } );
-        this._all = list.map( el => el.i );
-        updateVisible();
+        this._all = list;
+        this.updateVisible();
     };
 })(window['PCG']);

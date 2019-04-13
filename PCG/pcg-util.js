@@ -12,16 +12,24 @@
     };
 
     var MinMax = function() {};
-    MinMax .prototype = {
+    MinMax.prototype = {
         min: +Infinity,
         max: -Infinity,
         delta: 0,
-        update: function(o) {
+        update: function(o, opacity) {
             if(o.min<this.min){
-                this.min = o.min;
+                if(opacity !== void 0 && isFinite(this.min)){
+                    this.min = this.min-(this.min-o.min)*opacity;
+                }else{
+                    this.min = o.min;
+                }
             }
             if(o.max>this.max){
-                this.max = o.max;
+                if(opacity !== void 0 && isFinite(this.max)){
+                    this.max = this.max+(o.max-this.max)*opacity;
+                }else{
+                    this.max = o.max;
+                }
             }
             return this;
         },

@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, minimal-ui, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
 
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#287ba4">
+    <meta name="apple-mobile-web-app-title" content="Picograph">
+    <meta name="application-name" content="Picograph">
+    <meta name="msapplication-TileColor" content="#287ba4">
+    <meta name="theme-color" content="#ffffff">
+
     <title>Picograph</title>
     <script src="PCG/base.js"></script>
     <script src="PCG/pcg-util.js"></script>
@@ -88,6 +98,8 @@
             navs = document.querySelectorAll('.graph-nav'),
             switches = document.querySelectorAll('.graph-switches'),
             titles = document.querySelectorAll('.title');
+
+        var PCGs = [];
         for(var i = 0; i < 5; i++){
             (function(i) {
                 var graph = new PCG( {
@@ -103,6 +115,7 @@
                     }
                 } );
 
+                PCGs.push(graph);
 
                 window.addEventListener( 'resize', graph.resize );
             })(i);
@@ -111,11 +124,13 @@
         }
 
 
-        [].slice.call(document.querySelectorAll('.graph-mode-switch')).forEach(function(el) {
+        [].slice.call(document.querySelectorAll('.graph-mode-switch')).forEach(function(el, i) {
             el.addEventListener('click', function(e) {
                 this.parentNode.classList.toggle('night');
                 var span = this.querySelector('span');
                 span.innerText = span.innerText === 'Night'?'Day':'Night';
+                PCGs[i].consts.background = (span.innerText === 'Night'?'#fff':'#212f3f')
+                PCGs[i].resize();
                 e.preventDefault();
             });
         });

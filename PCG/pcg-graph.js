@@ -4,10 +4,14 @@
 
 
     PCG.updateGraph = function updateGraph(){
+
+
         var now = +new Date(),
             dt = ((now - this.lastUpdate)|0)/1000;
         if(dt>0.2)
             dt = 0;
+        this.updateVisible(dt);
+
         this.lastUpdate = now;
 
         /*const limits = {
@@ -27,9 +31,12 @@
             width = this.world.graph.width,
 
 
-            momentumRatio = width/momentumDelta,
+            momentumRatio = (width-this.constsDPR.paddingLeft-this.constsDPR.paddingRight)/momentumDelta,
+            momentumPaddingLeft = momentumDelta/width*this.constsDPR.paddingLeft,
+            momentumPaddingRight = momentumDelta/width*this.constsDPR.paddingRight;
 
-            getX = this.getX = function( time ){return (( time - minDate ) *momentumRatio)|0;};
+        minDate -= momentumPaddingLeft;
+        var getX = this.getX = function( time ){return (( time - minDate ) *momentumRatio)|0;};
 
 
         var minMaxes = this.minMaxes;
@@ -43,8 +50,8 @@
             timeLine = this.timeline;
 
         const limits = {
-            from: this._binarySearch(this.frame.from)-1,
-            to: this._binarySearch(this.frame.to)+1
+            from: Math.max(this._binarySearch(minDate)-1,0),
+            to: Math.min(this._binarySearch(this.frame.to+momentumPaddingLeft+momentumPaddingRight)+1,data.length-1),
         };
 
         var minMaxesLocal = this._getMinMax(limits.from, limits.to);
@@ -78,29 +85,36 @@
         ctx.lineWidth = graphStrokeWidth;
         ctx.lineJoin = 'bevel';
 
-        if(this.stacked){
-            for(v=_v-1; v>=0; v--){
-                var type = this.types[this.columns[visible[v]]];
-                if(type==='bar'){
-                    ctx.fillStyle = this.colors[ this.columns[ visible[ v ] ] ];
-                    this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
-                }
+
+        var vStep;
+        if(this.stacked) {
+            v = _v - 1;
+            vStep = -1;
+        }else {
+            v = 0;
+            vStep = 1;
+        }
+
+        for( ;; v+=vStep ){
+            if(this.stacked){
+                if(v<0)break;
+            }else{
+                if(v>=_v)break;
             }
-        }else{
-            for( v = 0; v < _v; v++ ){
-                var type = this.types[ this.columns[ visible[ v ] ] ];
-                if( type === 'line' ){
-                    ctx.strokeStyle = this.colors[ this.columns[ visible[ v ] ] ];
-                    this.ctx.graph( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
-                }else if( type === 'bar' ){
-                    ctx.fillStyle = this.colors[ this.columns[ visible[ v ] ] ];
-                    this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
-                }
+            var color = this.getColor( this.columns[ visible[ v ] ], this._all[visible[ v ]].opacity )
+            var type = this.types[ this.columns[ visible[ v ] ] ];
+            if( type === 'line' ){
+                ctx.strokeStyle = color;
+                this.ctx.graph( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+            }else if( type === 'bar' ){
+                ctx.fillStyle = color;
+                this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+            }else if( type === 'area'){
+                ctx.fillStyle = color;
+                this.ctx.area( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
             }
         }
 
-
-        //this.ctx.render();
         this.updateYAxis();
         this.updateXAxis();
         this.ctx.render();

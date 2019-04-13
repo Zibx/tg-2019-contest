@@ -1,14 +1,15 @@
 (function(PCG){
 
-    const h2d = a=>parseInt(a,16)/255;
-    const hex2float = function(clr) {
+    var h2d = function(a){return parseInt(a,16)/255;};
+    var h2i = function(a) {return parseInt(a,16);};
+    var hex2float = PCG.h2f = function(clr) {
         if(clr.length === 3){
-            return clr.split('').map(h2d).concat(0);
+            return clr.split('').map(h2i).concat(1);
         }else{
             return [
-                h2d(clr.substr(0,2)),
-                h2d(clr.substr(2,2)),
-                h2d(clr.substr(4,2)),
+                h2i(clr.substr(0,2)),
+                h2i(clr.substr(2,2)),
+                h2i(clr.substr(4,2)),
                 1];
 
         }
@@ -96,7 +97,7 @@
             var h =(this.consts.graphicHeight+this.consts.graphicPadding)|0;
             if(!this.imageData){
                 //this.ctx.clearRect(0,0,this.w,this.h);
-                this.ctx.fillStyle = '#fff';
+                this.ctx.fillStyle = this.consts.background;
                 this.ctx.fillRect(0,0,this.w,h);
                 this.imageData = this.ctx.getImageData(0,0,this.w,h);
 
@@ -130,6 +131,22 @@
             //new Path2D('M'+arr.join('L')));
 
         },
+        area: function(time, arr, from, to, width, color) {
+
+            var ctx = this.ctx;
+            var h = this.consts.graphicHeight;
+
+            ctx.beginPath();
+            ctx.moveTo(time[from], h);
+            ctx.lineTo(time[from], arr[from]);
+            for(var i = from+1; i<=to; i++){
+                ctx.lineTo(time[i], arr[i])
+            }
+            ctx.lineTo(time[i-1], h);
+
+            ctx.fill();
+
+        },
         bar: function(time, arr, from, to, width, color) {
             var ctx = this.ctx;
             ctx.beginPath();
@@ -138,20 +155,21 @@
             ctx.lineTo(time[from], arr[from]);
             for(var i = from+1; i<to; i++){
                 var last = i-1;
-                var middleX = ((time[last]+time[i])/2)|0;
+
                 ctx.lineTo(
-                    middleX,
+                    time[i],
                     arr[last]
                 );
                 ctx.lineTo(
-                    middleX,
+                    time[i],
                     arr[i]
                 );
 
 //                ctx.lineTo(time[i], arr[i])
             }
-            ctx.lineTo(time[i], arr[i-1]);
-            ctx.lineTo(time[i], h);
+            //ctx.lineTo(time[i], arr[i-1]);
+            ctx.lineTo(time[i-1]+(time[i-1]-time[i-2]), arr[i-1]);
+            ctx.lineTo(time[i-1]+(time[i-1]-time[i-2]), h);
             ctx.fill();
         },
         axisY: function(pos) {

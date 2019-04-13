@@ -170,14 +170,16 @@
             this.camera.action = 'move';
             frame.from = startFrame +
                 ( point - start ) / world.nav.width * ( this.maxDate - this.minDate );
-            if( frame.from < this.minDate ){
+            if( frame.from <= this.minDate ){
                 frame.from = this.minDate;
             }
             frame.to = frame.from + frameWidth;
-            if( frame.to > this.maxDate ){
+            if( frame.to >= this.maxDate ){
                 frame.to = this.maxDate;
                 frame.from = frame.to - frameWidth;
             }
+
+
             this.update();
             if(e.cancelable){
                 e.preventDefault();

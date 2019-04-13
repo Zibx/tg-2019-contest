@@ -5,13 +5,21 @@
     PCG.LOG2 = Math.log( 2 );
     PCG.zeroFn = function(){return 0};
 
+    var opacityGetter = function(el) { return el.opacity;};
+
     PCG.prototype = {
 
         xToTime: PCG.zeroFn,
         getX: PCG.zeroFn,
         getY: PCG.zeroFn,
+        animation: { // in milliseconds
+            lastCheckboxShake: 500,
+            show: 500,
+            hide: 500
+        },
 
         consts: {
+            background: '#fff',
             graphicHeight: 252,
             graphicPadding: 4,
 
@@ -76,9 +84,16 @@
             this.world = null;
             this._visible = [];
         },
+        getColor: function(name, opacity) {
+            this.colors[ name ][3] = opacity;
+            return 'rgba('+this.colors[ name ]+')'
+        },
         load: function( data ){
 
-            this.colors = data.colors;
+            this.colors = {};
+            for(var rowID in data.colors){
+                this.colors[rowID] = PCG.h2f(data.colors[rowID].substr(1));
+            }
             const columns = data.columns;
             const myData = this.data;
             var wholeData = columns.map((list)=>list.slice(1));
@@ -140,7 +155,7 @@
 
             this.graphCache = [];
 
-            for( k = 0; k < _k+1; k++ ){
+            for( k = 0; k < _k+2; k++ ){
                 minMaxes[k] = new PCG.MinMax();
                 // make gc happy, do not reallocate on each frame
                 cacheRow = this.graphCache[k] = new Array(_i);
@@ -193,14 +208,6 @@
             }
             return { min, max, delta: delta };
         },
-        _getOpacity: function() {
-            var v = this._getVisible(),
-                out = [];
-            for(var k = 0, _k = this.columns.length; k < _k; k++){
-                out[k] = v.indexOf(k)===-1?0:1;
-            }
-            return out;
-        },
         _getMinMax: function( from, to ){
             var l, _l, k, _k, i, _i;
             var minMaxesLocal = [],
@@ -209,20 +216,21 @@
             for( l = 0, _l = this.columns.length; l < _l; l++ ){
                 minMaxesLocal[l] = new PCG.MinMax();
             }
-            if(this.percentage){
+            /*if(this.percentage){
                 for( l = 0, _l = this.columns.length; l < _l; l++ ){
                     minMaxesLocal[l].min = 0;
                     minMaxesLocal[l].max = 1;
                 }
                 return minMaxesLocal;
-            }
+            }*/
             _k = this.columns.length;
             var zeroStarted = true;
             if(this.stacked){
-                var zeroStarted = false;
+                zeroStarted = false;
                 var data = this.data;
                 var opac = this._getOpacity(),
                     cacheSum = this.graphCache[_k],
+                    cacheSum2 = this.graphCache[_k+1],
                     max = 0, min = Infinity,
                     firstVisible;
                 for(k=0; k < _k; k++){
@@ -231,7 +239,7 @@
                         break;
                     }
                 }
-                for( i = from, _i = to; i < _i; i++ ){
+                for( i = from, _i = to; i <= _i; i++ ){
                     var stack = data[ i ];
                     var sum = 0;
                     if( stack[firstVisible] < min ){
@@ -246,6 +254,7 @@
                     }
 
                     cacheSum[i] = sum;
+                    cacheSum2[i] = sum;
                 }
                 for( k=0; k < _k; k++ ){
                     minMaxesLocal[k].max = max;
@@ -268,6 +277,7 @@
                         }
                     }
                 }else{
+
                     for( k = 0; k < _k; k++ ){
                         var dataRow = raw[ k ];
                         minMaxesLocal[ k ].min = 0;
@@ -300,9 +310,16 @@
             }else{
                 var minMax = new PCG.MinMax(),
                     visible = this._getVisible(),
-                    _v = visible.length, v;
+                    _v = visible.length, v,
+                    opac = this._getOpacity();
                 for(v = 0; v<_v; v++){
-                    minMax.update(minMaxesLocal[visible[v]]);
+                    if(opac[visible[v]]===1){
+                        minMax.update(minMaxesLocal[visible[v]]);
+                        break;
+                    }
+                }
+                for(v = 0; v<_v; v++){
+                    minMax.update(minMaxesLocal[visible[v]], opac[visible[v]]);
                 }
                 minMax1 = minMax;
                 minMax2 = new PCG.MinMax();
@@ -372,16 +389,27 @@
 
             if(this.stacked){
                 var sumCache = cache[this.columns.length],
+                    sumCache2 = cache[this.columns.length+1],
                     opac = this._getOpacity(),
                     opacity;
                 for( v = this.columns.length-1; v >=0; v-- ){
                     dataRow = raw[ v ];
                     cacheRow = cache[ v ];
                     opacity = opac[v];
-                    for( i = limits.from, _i = limits.to; i <= _i; i++ ){
-                        cacheRow[ i ] = ( height - ( sumCache[i] - mmmin ) * pxInData ) | 0;//getY( slice[ dataRow ] );
-                        sumCache[i] -= dataRow[ i ]*opacity;
+                    if(this.percentage){
+
+                        for( i = limits.from, _i = limits.to; i <= _i; i++ ){
+                            pxInData = height/sumCache2[i];
+                            cacheRow[ i ] = ( height - ( sumCache[i] ) * pxInData ) | 0;
+                            sumCache[i] -= dataRow[ i ]*opacity;
+                        }
+                    }else{
+                        for( i = limits.from, _i = limits.to; i <= _i; i++ ){
+                            cacheRow[ i ] = ( height - ( sumCache[i] - mmmin ) * pxInData ) | 0;
+                            sumCache[i] -= dataRow[ i ]*opacity;
+                        }
                     }
+
                 }
             }else{
                 for( v = 0; v < _v; v++ ){
@@ -401,6 +429,50 @@
         },
         _getVisible: function(){
             return this._visible;
+        },
+        _getOpacity: function() {
+            return this._all.map(opacityGetter);
+        },
+        updateVisible: function(dt) {
+            if(dt === void 0)
+                dt = 0.001
+            dt *=1000;
+
+            var all = this._all, row,
+                visibleChanged = false,
+                needMoreAnimation = false;
+
+            for(var a = 0, _a = all.length; a<_a;a++){
+                row = all[a];
+                if(row.show === false && row.opacity>0){
+                    needMoreAnimation = true;
+                    if(row.opacity === 1){
+                        visibleChanged = true;
+                    }
+                    row.opacity = Math.max(0, row.opacity - dt / this.animation.hide);
+                    if(row.opacity === 0){
+                        visibleChanged = true;
+                    }
+                }
+                if(row.show === true && row.opacity<1){
+                    needMoreAnimation = true;
+                    if(row.opacity === 0){
+                        visibleChanged = true;
+                    }
+                    row.opacity = Math.min(1, row.opacity + dt / this.animation.show);
+                    if(row.opacity === 1){
+                        visibleChanged = true;
+                    }
+                }
+            }
+            if(visibleChanged || !this._visible.length){
+                this._visible = this._all
+                    .filter( el => el.opacity > 0 )
+                    .map( el => el.i );
+            }
+            if(needMoreAnimation){
+                this.update();
+            }
         },
         updateNav: PCG.updateNav,
         navGraphUpdateVisibility: PCG.navGraphUpdateVisibility,
@@ -510,7 +582,11 @@
             DPR = PCG.DPR = window.devicePixelRatio;
             var constsDPR = this.constsDPR;
             for(var key in this.consts) if(this.consts.hasOwnProperty(key)){
-                constsDPR[key] = this.consts[key]*DPR;
+                if(typeof this.consts[key] === 'number'){
+                    constsDPR[ key ] = this.consts[ key ] * DPR;
+                }else{
+                    constsDPR[ key ] = this.consts[ key ];
+                }
             }
         },
         collectWorldInfo: function(){
