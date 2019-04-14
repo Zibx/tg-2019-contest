@@ -11,19 +11,47 @@
 
         xToTime: PCG.zeroFn,
         getX: PCG.zeroFn,
-        getY: PCG.zeroFn,
+        getY1: function( val ){return (this.constsDPR.graphicHeight - ( val - this._y1MMIN ) * this._y1PXINDATA);},
+        getY2: function( val ){return (this.constsDPR.graphicHeight - ( val - this._y2MMIN ) * this._y2PXINDATA);},
+        getPercentY: function( val ){
+            var h = this.constsDPR.graphicHeight,
+                top = this.constsDPR.labelFont+this.constsDPR.graphicPadding*2;
+
+            return top+(h-top) * (1- val/100);
+        },
+        _y1MMIN: 0,
+        _y1PXINDATA: 1,
+
+        _y2MMIN: 0,
+        _y2PXINDATA: 1,
+
         animation: { // in milliseconds
             lastCheckboxShake: 500,
             show: 500,
-            hide: 500
+            hide: 300,
+
+            labelHide: 200,
+            labelShow: 300,
+
         },
 
         consts: {
-            background: '#fff',
-            graphicHeight: 252,
+            graphicHeight: 280,
             graphicPadding: 4,
-
+            axeX: 31,
             navigationHeight: 50,
+            navigationWrapperHeight: 54,
+
+            navigationRadius: 6,
+            bottom: 50,
+            navWindowOverlap: 2,
+            navWindowDraggerWidth: 13,
+
+            navWindowDraggerHandleWidth: 2.5,
+            navWindowDraggerHandleheight: 13,
+
+            axisWidth: 1,
+            labelFont: 12,
 
             XAxisHeight: 40,
             YAxisLabelPaddingBottom: 6,
@@ -33,7 +61,27 @@
             graphStrokeWidth: 2,
             resizeOffset: 40,
             paddingLeft: 20,
-            paddingRight: 20
+            paddingRight: 20,
+            axisYLabelPaddingBottom: 5,
+
+            day: {
+                background: PCG.h2f('#FFFFFF'),
+                xLabel: PCG.h2f('#252529', 50), // CHECKED
+                yLabel: PCG.h2f('#252529', 50), // CHECKED
+                axis: PCG.h2f('#182D3B20'), // CHECKED
+                scrollBG: PCG.h2f('#E2EEF9', 60),
+                scrollSelector: PCG.h2f('#C0D1E1'),
+                scrollResizers: PCG.h2f('#ffffff')
+            },
+            night: {
+                background: PCG.h2f('#242F3E'),
+                xLabel: PCG.h2f('#A3B1C2', 60), // CHECKED
+                yLabel: PCG.h2f('#ECF2F8', 50), // CHECKED
+                axis: PCG.h2f('#FFFFFF', 10), // CHECKED
+                scrollBG: PCG.h2f('#304259',60),
+                scrollSelector: PCG.h2f('#56626D'),
+                scrollResizers: PCG.h2f('#ffffff')
+            }
         },
         formatters: {
             date: PCG.dateFormatter,
@@ -45,16 +93,23 @@
         world: null,
         _visible: null,
         _all: null,
-        _forceUpdate: true,
+        skipNextFrame: false,
+        updatePreview: true,
         init: function(){
+            this.day = true;
             this.clear();
             this.constsDPR = {};
             this.updateConsts();
             this.initDOM();
+
+
+            this.ctx = new PCG.Canvas2d(this.els.graph, this);
+
             this.initListeners();
             if(this.dataSource){
                 this.loadData();
             }
+
         },
         loadData: function() {
             var me = this;
@@ -73,6 +128,13 @@
             this.camera = null;
             this.colors = {};
             this.data = [];
+
+            this.yAxis = {
+                hash: {},
+                step: 0,
+                inited: false
+            };
+
             this.columns = [];
             for( let i in this.els ){
                 if( this.els.hasOwnProperty( i ) ){
@@ -85,8 +147,7 @@
             this._visible = [];
         },
         getColor: function(name, opacity) {
-            this.colors[ name ][3] = opacity;
-            return 'rgba('+this.colors[ name ]+')'
+            return PCG.color(this.colors[ name ], opacity);
         },
         load: function( data ){
 
@@ -136,7 +197,7 @@
 
 
             this.initCheckboxes();
-            this._forceUpdate = true;
+            this.updatePreview = true;
 
             this.update();
             setTimeout(this._update, 100);
@@ -232,12 +293,21 @@
                     cacheSum = this.graphCache[_k],
                     cacheSum2 = this.graphCache[_k+1],
                     max = 0, min = Infinity,
-                    firstVisible;
+                    firstVisible,
+                    maxOpacity = 0, visiblest;
                 for(k=0; k < _k; k++){
                     if(opac[k]>0.7){
                         firstVisible = k+1;
                         break;
                     }
+                    if(maxOpacity<opac[k]){
+                        maxOpacity = opac[k];
+                        visiblest = k+1;
+                    }
+
+                }
+                if(!firstVisible){
+                    firstVisible = visiblest;
                 }
                 for( i = from, _i = to; i <= _i; i++ ){
                     var stack = data[ i ];
@@ -292,7 +362,7 @@
             }
             for( k = 0; k < _k; k++ ){
                 minMaxesLocal[k].updateDelta();
-                var delta = minMaxesLocal[k].delta/this.constsDPR.graphicHeight*(this.constsDPR.graphicPadding)
+                var delta = minMaxesLocal[k].delta/this.constsDPR.graphicHeight*(this.constsDPR.graphicPadding);// TODO: why graphicPadding?
                 if(!zeroStarted){
                     minMaxesLocal[k].min -= delta;
                 }
@@ -301,9 +371,8 @@
             }
             return minMaxesLocal;
         },
-        updateCameraY: function(minMaxesLocal, dt) {
+        updateCameraY: function(minMaxesLocal, dt, camera) {
             var minMax1, minMax2;
-
             if(this.y_scaled){
                 minMax1 = minMaxesLocal[0];
                 minMax2 = minMaxesLocal[1];
@@ -326,55 +395,63 @@
                 minMax2.update(minMax1);
             }
 
-            if(this.camera === null){
+            minMax1.updateDelta();
+            minMax2.updateDelta();
+            if(this.camera === null || camera){
                 let day = 1000*60*60*24;
-                this.camera = {
-                    minMax1: minMax1,
-                    minMax2: minMax2,
-                    offset: this.data[0][0],
-                    AxisXGranule: day * Math.pow(2,Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)))
-                };
+                var justCalc = !!camera;
+                camera = camera || {};
+                camera.minMax1 = minMax1;
+                camera.minMax2 = minMax2;
+                camera.offset = this.data[0][0];
+                camera.AxisXGranule = day * Math.pow(2,Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)));
+
+                if(!justCalc){
+                    this.camera = camera;
+                }
             }else{
+                camera = this.camera;
                 if(
-                    Math.abs(this.camera.minMax1.max - minMax1.max)>0.01 ||
-                    Math.abs(this.camera.minMax2.max - minMax2.max)>0.01
+                    Math.abs(camera.minMax1.max - minMax1.max)>0.01 ||
+                    Math.abs(camera.minMax2.max - minMax2.max)>0.01
                 ) {
                     this.update();
                 }
                 var dAnimation = Math.min(dt,1)*3;
                 minMax1.max = PCG.lerp(
-                    this.camera.minMax1.max,
+                    camera.minMax1.max,
                     minMax1.max,
                     dAnimation,
                     2
                 );
                 minMax1.min = PCG.lerp(
-                    this.camera.minMax1.min,
+                    camera.minMax1.min,
                     minMax1.min,
                     dAnimation,
                     2
                 );
                 minMax1.updateDelta();
-                this.camera.minMax1 = minMax1;
+                camera.minMax1 = minMax1;
 
                 minMax2.max = PCG.lerp(
-                    this.camera.minMax2.max,
+                    camera.minMax2.max,
                     minMax2.max,
                     dAnimation,
                     2
                 );
                 minMax2.min = PCG.lerp(
-                    this.camera.minMax2.min,
+                    camera.minMax2.min,
                     minMax2.min,
                     dAnimation,
                     2
                 );
                 minMax2.updateDelta();
-                this.camera.minMax2 = minMax2;
+                camera.minMax2 = minMax2;
             }
         },
-        updateGraphData: function(limits) {
-            var height = this.constsDPR.graphicHeight,
+        updateGraphData: function(limits, preview, inCamera) {
+            var camera = inCamera || this.camera,
+                height = preview ? this.constsDPR.navigationHeight : this.constsDPR.graphicHeight,
                 raw = this.rawData,
                 cache = this.graphCache,
                 visible = this._getVisible(),
@@ -382,9 +459,10 @@
                 v, _v = visible.length,
                 i,_i,
 
-                pxInData = height/this.camera.minMax1.delta,
-                mmmin = this.camera.minMax1.min,
+                pxInData = this._y1PXINDATA = height/camera.minMax1.delta,
+                mmmin = this._y1MMIN = camera.minMax1.min,
                 dataRow, cacheRow;
+
 
 
             if(this.stacked){
@@ -392,6 +470,11 @@
                     sumCache2 = cache[this.columns.length+1],
                     opac = this._getOpacity(),
                     opacity;
+                if(this.percentage){
+
+                    var topPadding = preview?0:this.constsDPR.labelFont+this.constsDPR.graphicPadding*2;
+                    height-=topPadding;
+                }
                 for( v = this.columns.length-1; v >=0; v-- ){
                     dataRow = raw[ v ];
                     cacheRow = cache[ v ];
@@ -400,7 +483,7 @@
 
                         for( i = limits.from, _i = limits.to; i <= _i; i++ ){
                             pxInData = height/sumCache2[i];
-                            cacheRow[ i ] = ( height - ( sumCache[i] ) * pxInData ) | 0;
+                            cacheRow[ i ] = ( topPadding+ height - ( sumCache[i] ) * pxInData ) | 0;
                             sumCache[i] -= dataRow[ i ]*opacity;
                         }
                     }else{
@@ -414,8 +497,8 @@
             }else{
                 for( v = 0; v < _v; v++ ){
                     if( this.y_scaled && visible[ v ] ){
-                        pxInData = height / this.camera.minMax2.delta;
-                        mmmin = this.camera.minMax2.min;
+                        pxInData = this._y2PXINDATA = height / camera.minMax2.delta;
+                        mmmin = this._y2MMIN = camera.minMax2.min;
                     }
                     dataRow = raw[ visible[ v ] ];
                     cacheRow = cache[ visible[ v ] ];
@@ -471,6 +554,7 @@
                     .map( el => el.i );
             }
             if(needMoreAnimation){
+                this.updatePreview = true;
                 this.update();
             }
         },
@@ -507,12 +591,8 @@
         },
         _update: function(){
             this.shouldUpdate = false;
-            if( this._forceUpdate ){
-                this.updateNav();
-            }
-            this.updateNavWindow();
+
             this.updateGraph();
-            this._forceUpdate = false;
         },
         _removeTooltipCircles: function() {
             let circle;
@@ -521,6 +601,7 @@
             }
         },
         showTooltip: function( sliceID ){
+            console.log(sliceID)
             const slice = this.data[ sliceID ],
                 time = slice[ 0 ];
             const visible = this._getVisible();
@@ -538,9 +619,9 @@
                 name = this.columns[ visible[ i ] ];
                 this.els.highlightCircles.push( D.circle( {
                     attr: {
-                        stroke: this.colors[ name ],
+                        stroke: this.getColor( name,1),
                         cx: xPos,
-                        cy: this.getY( val ),
+                        cy: this.getY1( val ),
                         r: 6,
                         'stroke-width': 3
                     },
@@ -550,7 +631,7 @@
                 this.els.tooltipInfo.appendChild(
                     D.div( {
                             cls: 'pcg-tooltip__info-item',
-                            style: { color: this.colors[ name ] }
+                            style: { color: this.getColor(name,1) }
                         },
                         D.div( { cls: 'pcg-tooltip__info-item__count' }, PCG.numberFormat(val) ),
                         this.names[ name ]
@@ -583,7 +664,7 @@
             var constsDPR = this.constsDPR;
             for(var key in this.consts) if(this.consts.hasOwnProperty(key)){
                 if(typeof this.consts[key] === 'number'){
-                    constsDPR[ key ] = this.consts[ key ] * DPR;
+                    constsDPR[ key ] = Math.round(this.consts[ key ] * DPR);
                 }else{
                     constsDPR[ key ] = this.consts[ key ];
                 }
@@ -595,7 +676,7 @@
             this.updateConsts();
             const navRect = this.renderTo.nav.getClientRects()[ 0 ];
             const graphRect = this.renderTo.graph.getClientRects()[ 0 ];
-
+            this.scheme = this.consts[this.day?'day':'night'];
             const canvasRect = this.els.graph.getBoundingClientRect();
             this.world = {
                 nav: {
@@ -609,11 +690,16 @@
             };
 
         },
+        scheme: {},
+        setNightMode: function(val) {
+            this.day = !val;
+            this.resize();
+        },
         resize: function(){
             var mnu = this;
             requestAnimationFrame( function(){
                 mnu.collectWorldInfo();
-                mnu._forceUpdate = true;
+                mnu.updatePreview = true;
                 mnu.ctx.resize();
                 mnu._update();
             } );

@@ -1,7 +1,7 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: sans-serif;
+    font-family: HelveticaNeue-Light, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;
     font-size: 20px;
 
 }
@@ -11,7 +11,7 @@ body {
 }
 
 .graph {
-    height: 359px;
+    height: 392px;
 }
 
 
@@ -39,7 +39,7 @@ body {
     position: absolute;
 }
 .graph svg, .graph canvas {
-    height: 92%;
+    height: 368px;
 }
 H1 {
     margin: 20px
@@ -220,8 +220,10 @@ img {
 
 
 .graph-mode-switch {
-    font-size:30px;
+    font-size:22px;
     text-align: center;
+    cursor: pointer;
+    color: #108BE3;
 }
 circle {
     fill: #fff;
@@ -237,7 +239,7 @@ circle {
 .night .pcg-checkbox__img-wrapper::after {background-color: #212f3f}
 .night .pcg-y-axis {border-bottom-color: rgba(91, 107, 127, 0.3)}
 .night .pcg-y-axis-label, .night .pcg-x-axis-label {color: #5b6b7f; text-shadow: 2px 2px 0 #213040;}
-.night .graph-mode-switch {color: #1891ff}
+.night .graph-mode-switch {color: #439AD9}
 .night .pcg-tooltip {background-color: #1a2837; box-shadow: none;}
 .night .pcg-tooltip__date {color: #E5EFF5}
 .night .pcg-tooltip__vertical-slice {border-color: rgba(91, 107, 127, 0.9)}
@@ -257,9 +259,6 @@ circle {
     background-color: #213040;
 }
 
-.graph-mode-switch {
-    cursor: pointer;
-}
 path {
     transition: opacity ease-in 0.3s;
 }
@@ -270,10 +269,10 @@ path {
     transition: transform ease-in 0.3s;
 }
 .graph-holder {
-    padding:20px;
+    padding: 20px 20px 40px 20px;
     position: relative;
     overflow-x: hidden;
-    /*border-bottom: 1px solid #5b6b7f;*/
+    border-top: 1px solid #ebf4ff;
 }
 
 
@@ -282,7 +281,7 @@ path {
     position: relative;
     /*margin-bottom: 64px;*/
     width: 100%;
-    margin: 0 auto 64px auto;
+    margin: 0 auto 32px auto;
     max-width: 500px;
 }
 

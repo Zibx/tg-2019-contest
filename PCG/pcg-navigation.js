@@ -1,113 +1,81 @@
 (function(PCG){
     const D = PCG.D;
-    PCG.updateNav = function updateNav() {
-        // On big input data - this update can take a while
-        // So we would check updateNavID is equal to this.updateNavID.
-        const updateNavID = this.updateNavID = Math.random().toString(36).substr(2);
+    PCG.updateNav = function updateNav(dt){
+
+        var ctx = this.ctx.activate('nav'),
+
+            limits = {
+                from: 0,
+                to: this.data.length-1
+            },
+            visible = this._getVisible(),
+            cache = this.graphCache,
+            timeLine = this.timeline,
+
+            i, _i, v, _v = visible.length,
+
+            graphTimeLine = this.graphTimeLine,
+
+            minDate = timeLine[0],
+            maxDate = timeLine[timeLine.length-1],
+
+            width = this.world.graph.width,
+
+            momentumDelta = maxDate - minDate,
+            momentumRatio = (width-this.constsDPR.paddingLeft-this.constsDPR.paddingRight)/momentumDelta;
 
 
-        //const minMax = this._getMinMax( 0, this.data.length - 1 );
+        this.updatePreview = false;
+        this.ctx.clear();
 
-        if( !this.world ){
-            this.collectWorldInfo();
+        var minMaxesLocal = this._getMinMax(limits.from, limits.to);
+        var globalCamera = {};
+        this.updateCameraY(minMaxesLocal, dt, globalCamera)
+        for( i = limits.from, _i = limits.to; i <= _i; i++ ){
+
+
+            graphTimeLine[ i ] = ( ( timeLine[i] - minDate ) * momentumRatio ) | 0;
         }
 
-        const maxDotsCount = this.world.nav.width / this.consts.previewPxPerDot,
-            navigationGraphStrokeWidth = this.consts.navigationGraphStrokeWidth;
+        this.updateGraphData(limits, true, globalCamera);
 
-        const minDate = this.minDate;
-        const momentumDelta = ( this.maxDate - minDate );
-        const momentumInGranule = momentumDelta / maxDotsCount;
-
-        const data = this.data;
-
-        let lastDate = data[ 0 ][ 0 ];
-
-        const all = this._all;
-
-        const previewWidth = this.world.nav.width;
-        const previewHeight = this.world.nav.height;
-
-
-        const getX = ( time ) => (( time - minDate ) / momentumDelta * previewWidth)|0;
-
-
-        return;
-
-
-
-        let i = 1, _i = data.length, sliceSum = this._all.map(()=>0), sliceSumCount = 0;
-        let minMaxes = [];
-        for( let j = 0, _j = all.length; j < _j; j++ ){
-            minMaxes[j] = {min:Infinity, max: -Infinity};
+        var vStep;
+        if(this.stacked) {
+            v = _v - 1;
+            vStep = -1;
+        }else {
+            v = 0;
+            vStep = 1;
         }
+        ctx.lineWidth = this.constsDPR.navigationGraphStrokeWidth;
+        ctx.lineJoin = 'bevel';
 
-        const svgData = this._all.map( ( id, i ) => [
-            [ 0, data[ 0 ][ i + 1 ] ]
-        ] );
-        const next = ()=>{
-            if(updateNavID !== this.updateNavID)
-                return;
-            for( let _i0 = Math.min(_i, i+10000); i < _i0; i++ ){
-                const slice = data[ i ];
-
-                // granular aggregate
-                for( let j = 0, _j = all.length; j < _j; j++ ){
-                    let mm = minMaxes[ j ],
-                        valJ = slice[ j + 1 ];
-                    if(valJ>mm.max){
-                        mm.max = valJ;
-                    }
-                    if(valJ<mm.min){
-                        mm.min = valJ;
-                    }
-                    sliceSum[ j ]+=valJ;
-                }
-                sliceSumCount++;
-
-                if( slice[ 0 ] - lastDate >= momentumInGranule ){
-                    const x = getX( slice[ 0 ] );
-                    for( let j = 0, _j = all.length; j < _j; j++ ){
-
-                        // draw median
-                        svgData[ j ].push( [ x,  sliceSum[ j ]/sliceSumCount ] );
-                    }
-                    lastDate = slice[ 0 ];
-                    sliceSum = this._all.map(()=>0);
-                    sliceSumCount = 0;
-                }
-            }
-
-            if(i < _i){
-                setTimeout( next, 1 );
+        for( ;; v+=vStep ){
+            if(this.stacked){
+                if(v<0)break;
             }else{
-                let graph;
-                //D.removeChildren(this.els.nav);
-                while( ( graph = this.els.navGraphs.pop() ) ){
-                    this.els.nav.removeChild( graph );
-                }
-                this.minMaxes = minMaxes;
-                for( let j = 0, _j = svgData.length; j < _j; j++ ){
-                    let minMax = minMaxes[j];
-                    const getY = ( val ) => (previewHeight - ( val - 0 ) / minMax.max * previewHeight)|0;
-                    graph = D.path({
-                        renderTo: this.els.nav,
-                        attr: {
-                            stroke: this.colors[ this.columns[ all[ j ] ] ],
-                            'stroke-width': navigationGraphStrokeWidth,
-                            fill: 'none',
-                            d: 'M ' + svgData[ j ].map( ( point ) => point[0]+' '+getY(point[1]) ).join( ' L ' )
-                        }
-                    });
-
-                    this.els.navGraphs.push( graph );
-                }
-                this.navGraphUpdateVisibility();
+                if(v>=_v)break;
             }
-        };
-        next();
+            var color = this.getColor( this.columns[ visible[ v ] ], this._all[visible[ v ]].opacity );
+            var type = this.types[ this.columns[ visible[ v ] ] ];
+            if( type === 'line' ){
+                ctx.strokeStyle = color;
+                this.ctx.graph( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+            }else if( type === 'bar' ){
+                ctx.fillStyle = color;
+                this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+            }else if( type === 'area'){
+                ctx.fillStyle = color;
+                this.ctx.area( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+            }
+        }
+
+
     };
+
     PCG.updateNavWindow = function updateNavWindow() {
+
+
 
         const resizeOffset = this.consts.resizeOffset;
 
@@ -122,7 +90,7 @@
         const left = PCG.DPR*(((this.frame.from-minDate)/momentumDelta*this.world.nav.width)|0),
             width = PCG.DPR*(((this.frame.to-this.frame.from)/momentumDelta*this.world.nav.width)|0);
 
-
+        // return
         this.els.navWindow.style.left = left+'px';
         this.els.navWindow.style.width = width+'px';
         const ears = this.els.navEars;

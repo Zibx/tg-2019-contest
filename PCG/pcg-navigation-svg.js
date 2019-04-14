@@ -107,7 +107,7 @@
         next();
     };
     PCG.updateNavWindow = function updateNavWindow() {
-
+        return
         const resizeOffset = this.consts.resizeOffset;
 
         const minDate = this.minDate;

@@ -8,37 +8,49 @@
 
         var now = +new Date(),
             dt = ((now - this.lastUpdate)|0)/1000;
+        this.lastUpdate = now;
+
+        if(this.skipNextFrame){
+            this.skipNextFrame = false;
+            return this.update();
+        }
+
         if(dt>0.2)
             dt = 0;
         this.updateVisible(dt);
 
-        this.lastUpdate = now;
 
-        /*const limits = {
-                from: this._binarySearch(this.frame.from)-1,
-                to: this._binarySearch(this.frame.to)+1
-            };
-
-        let minMax = this._getMinMax( limits.from, limits.to );*/
 
 
 
         var minDate = this.frame.from,
-            momentumDelta = ( this.frame.to - minDate ),
+            maxDate = this.frame.to,
+            momentumDelta = ( maxDate - minDate ),
             data = this.data,
             visible = this._getVisible(),
 
             width = this.world.graph.width,
-
-
-            momentumRatio = (width-this.constsDPR.paddingLeft-this.constsDPR.paddingRight)/momentumDelta,
             momentumPaddingLeft = momentumDelta/width*this.constsDPR.paddingLeft,
             momentumPaddingRight = momentumDelta/width*this.constsDPR.paddingRight;
 
         minDate -= momentumPaddingLeft;
+        maxDate += momentumPaddingRight;
+
+        var raw = this.rawData,
+            timeLine = this.timeline;
+
+        if(this.types[ this.columns[ visible[ 0 ] ] ] === 'bar'){
+            var tl = timeLine.length-1;
+            momentumDelta += timeLine[tl]-timeLine[tl-1];
+        }
+
+
+        var momentumRatio = (width-this.constsDPR.paddingLeft-this.constsDPR.paddingRight)/momentumDelta;
+
+
         var getX = this.getX = function( time ){return (( time - minDate ) *momentumRatio)|0;};
 
-
+        this.xToTime = function(x){return x/momentumRatio+minDate;}
         var minMaxes = this.minMaxes;
 
 
@@ -46,25 +58,26 @@
 
         _v = visible.length;
         _k = this.columns.length;
-        var raw = this.rawData,
-            timeLine = this.timeline;
+
 
         const limits = {
             from: Math.max(this._binarySearch(minDate)-1,0),
-            to: Math.min(this._binarySearch(this.frame.to+momentumPaddingLeft+momentumPaddingRight)+1,data.length-1),
+            to: Math.min(this._binarySearch(maxDate)+3,data.length-1),
         };
 
         var minMaxesLocal = this._getMinMax(limits.from, limits.to);
         this.updateCameraY(minMaxesLocal, dt);
 
-
-        var /*getY = this.getY = function( val ){return (height - ( val - minMax.min ) / minMax.delta * height);},
-            xToTime = this.xToTime = (x)=>x/width*momentumDelta+minDate,*/
-            cache = this.graphCache;
+        var minMaxesLocal = this._getMinMax(limits.from, limits.to);
 
 
 
-        this.ctx.clear();
+            /*xToTime = this.xToTime = (x)=>x/width*momentumDelta+minDate,*/
+            var cache = this.graphCache;
+
+
+
+
 
 
         var graphTimeLine = this.graphTimeLine;
@@ -80,7 +93,11 @@
 
         const graphStrokeWidth = this.constsDPR.graphStrokeWidth;
 
-        var ctx = this.ctx.ctx;
+
+
+        var ctx = this.ctx.activate('graph');
+
+        this.ctx.clear();
 
         ctx.lineWidth = graphStrokeWidth;
         ctx.lineJoin = 'bevel';
@@ -94,6 +111,7 @@
             v = 0;
             vStep = 1;
         }
+
 
         for( ;; v+=vStep ){
             if(this.stacked){
@@ -115,9 +133,22 @@
             }
         }
 
-        this.updateYAxis();
-        this.updateXAxis();
+        this.updateYAxis(minMaxesLocal, dt);
+
+        this.updateXAxis(dt, minDate, maxDate);
+
+        if(this.updatePreview){
+            this.updateNav(dt);
+        }
+        this.updateNavWindow();
+
+
         this.ctx.render();
+        this.updatePreview = false;
+        var endDate = +new Date();
+        if(endDate-now>1000/62){
+            this.skipNextFrame = true;//endDate-now-(1000/60);
+        }
        // requestAnimationFrame(()=>{this.updateGraph()})
 
 

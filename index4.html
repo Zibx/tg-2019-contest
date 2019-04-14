@@ -34,9 +34,9 @@
     <link href="PCG/styles.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<h1>Contest. Stage 2</h1>
+<h1>level 2</h1>
     <div class="graph-holder">
-        <div class="title">Picograph 1</div>
+        <div class="title">Followers</div>
         <!-- It is a feature - you can spread different parts of graphic all over the page -->
         <div class="graph"></div>
         <div class="graph-nav"></div>
@@ -46,7 +46,7 @@
 
 
     <div class="graph-holder">
-        <div class="title">Picograph 2</div>
+        <div class="title">Interactions</div>
         <div class="graph"></div>
         <div class="graph-nav"></div>
         <div class="graph-switches"></div>
@@ -54,7 +54,7 @@
     </div>
 
     <div class="graph-holder">
-        <div class="title">Picograph 3</div>
+        <div class="title">Fruits Exterminated (bln)</div>
         <div class="graph"></div>
         <div class="graph-nav"></div>
         <div class="graph-switches"></div>
@@ -62,7 +62,7 @@
     </div>
 
     <div class="graph-holder">
-        <div class="title">Picograph 4</div>
+        <div class="title">Views</div>
         <div class="graph"></div>
         <div class="graph-nav"></div>
         <div class="graph-switches"></div>
@@ -70,7 +70,7 @@
     </div>
 
     <div class="graph-holder">
-        <div class="title">Picograph 5</div>
+        <div class="title">No More Pears</div>
         <div class="graph"></div>
         <div class="graph-nav"></div>
         <div class="graph-switches"></div>
@@ -128,9 +128,9 @@
             el.addEventListener('click', function(e) {
                 this.parentNode.classList.toggle('night');
                 var span = this.querySelector('span');
-                span.innerText = span.innerText === 'Night'?'Day':'Night';
-                PCGs[i].consts.background = (span.innerText === 'Night'?'#fff':'#212f3f')
-                PCGs[i].resize();
+
+                span.innerText = PCGs[i].day?'Day':'Night';
+                PCGs[i].setNightMode(PCGs[i].day);
                 e.preventDefault();
             });
         });

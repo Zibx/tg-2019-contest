@@ -20,15 +20,19 @@
     });
     shortMonths[8] = 'Sept';
 
+    var second = 1000,
+        minute = second * 60,
+        hour = minute * 60,
+        day = hour*24;
     PCG.dateFormatter = (date)=>{
         if(!(date instanceof Date)){
-            date = new Date(date);
+            date = new Date(Math.round(date/day)*day);
         }
         return shortMonths[date.getMonth()] +' '+ date.getDate();
     };
     PCG.weekDateFormatter = (date)=>{
         if(!(date instanceof Date)){
-            date = new Date(date);
+            date = new Date(Math.round(date/day)*day);
         }
         return weekDays[date.getDay()]+', '+PCG.dateFormatter(date);
     };

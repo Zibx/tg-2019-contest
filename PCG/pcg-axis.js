@@ -1,27 +1,62 @@
 (function(PCG){
     const D = PCG.D;
     const XlabelSize = 45;
-    PCG.updateYAxis = function updateYAxis(minMax, getY) {
-        return
-        const hash = this.els.YAxisHash;
-        const delta = Math.ceil(minMax.max)-Math.floor(minMax.min),
-            from = minMax.min;
-        const yAxisStorage = this.els.yAxisStorage;
-        const yAxisLabelsStorage = this.els.yAxisLabelsStorage;
+    PCG.updateYAxis = function updateYAxis(minMax, dt){
+        /*var axeData = this.yAxis;
+
+        var minMax1 = this.camera.minMax1;
+        var cc = 0;
+        if(minMax1.delta===0)
+            console.log(minMax1)
+        for( var i = minMax1.min; i < minMax1.max; i += minMax1.delta / 6+0.1 ){
+            cc++
+            if(cc>=1000)
+                return;
+            this.ctx.axisY( this.getY1( i ) )
+        }*/
+return
+        var ctx = this.ctx.activate('graph');
+
+
+        var needUpdate = false;
+
+        var hash = this.els.YAxisHash;
+
+        var minMax1 = this.camera.minMax1,
+            delta1 = minMax1.delta,
+            from1 = minMax1.min;
+
+
+        var count = 7,
+            getY = this.getY1;
+
+
         let item, line, label;
 
-        const count = 7;
 
-        const basic = delta/(count-1),
+
+        var basic = delta1/(count-1),
             scale = Math.pow(10, Math.ceil(Math.log(basic)/Math.log(10)-1)),
             rounded = Math.round(basic/scale)*scale,
-            roundedFrom = Math.ceil(from/scale*10)*scale/10;
+            roundedFrom = Math.ceil(from1/scale*10)*scale/10;
 
-        const out = [roundedFrom];
+
+        if(this.y_scaled){
+            var visible = this._getVisible();
+            var minMax2 = this.camera.minMax2;
+        }
+
+        var out = [roundedFrom];
         let i, val;
 
         for(i = 1; i < count; i++){
             out.push(Math.round((roundedFrom+ rounded*i)/scale)*scale)
+        }
+
+        if(this.percentage){
+
+            out = [0,25,50,75,100];
+            getY = this.getPercentY
         }
         const now = +new Date();
 
@@ -31,173 +66,150 @@
 
         for(i = 0; i < count; i++){
 
-            const pos = getY(out[i]);
+            const pos = getY.call(this, out[i]);
+
             if(pos<graphHeight*1.01 && pos>0.05){
                 val = out[i];
-                usedHash[val] = true;
-                if(val in hash){
-                    item = hash[val];
-                    line = item.line;
-                    label = item.label;
-                    if(item.destroy !== false){
-                        item.destroy = false;
-                        line.classList.remove('hide');
-                        label.classList.remove('hide');
-                        line.classList.add('visible');
-                        label.classList.add('visible');
-                    }
-                    if(item.visible === false){
-                        item.visible = true;
-                        line.classList.add('visible');
-                        label.classList.add('visible');
-                    }
-
-                    this.ctx.axisY(pos);
-
-                    /*line.style.top = pos + 'px';
-                    label.style.bottom = offset - pos  +'px';*/
+                var readable = PCG.numberFormat(val);
+                usedHash[readable] = true;
+                if(readable in hash){
+                    item = hash[readable];
+                    item.visible = true;
+                    item.top = pos;
                 }else{
-                    hash[val] = {
+                    hash[readable] = {
                         val: val,
-                        visible: false,
-                        destroy: false,
-                        line: D.div( {
-                            cls: 'pcg-y-axis',
-                            renderTo: yAxisStorage,
-                            style: {
-                                top: pos + 'px'
-                            }
-                        }),
-                        label: D.div( {
-                            cls: 'pcg-y-axis-label',
-                            renderTo: yAxisLabelsStorage,
-                            style: {bottom: offset - pos  +'px'}
-                        }, PCG.numberFormat(out[ i ]) )
+                        visible: true,
+                        opacity: 1,
+                        top: pos,
+                        label: readable
                     };
-                    this.ctx.axisY(pos);
+                    //this.ctx.axisY(pos);
 
                 }
             }
         }
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.lineWidth = this.constsDPR.axisWidth;
+        ctx.font = this.constsDPR.labelFont+'px HelveticaNeue-Light, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif';
+
         for( val in hash ){
+            item = hash[val];
             if(!(val in usedHash)){
-                item = hash[val];
-                line = item.line;
+                needUpdate = true;
                 label = item.label;
 
-                let pos = getY(item.val);
-                line.style.top = pos + 'px';
-                label.style.bottom = offset - pos  +'px';
-                if(item.destroy === false){
-                    item.destroy = now + 700;
-                    line.classList.add('hide');
-                    label.classList.add('hide');
-                    line.classList.remove('visible');
-                    label.classList.remove('visible');
-                } else {
-                    if(item.destroy<now){
-                        yAxisLabelsStorage.removeChild(item.label);
-                        yAxisStorage.removeChild(item.line);
-                        delete hash[val];
-                    }
+                let pos = this.getY1(item.val);
+                item.visible = false;
+                item.top = pos;
+                item.opacity = Math.max(0,item.opacity - dt*1000/this.animation.labelHide);
+                if(item.opacity <= 0){
+                    delete hash[val];
+                    continue;
+                }
+            }else{
+                if(item.opacity<1){
+                    needUpdate = true;
+                    item.opacity = Math.min(1,item.opacity + dt * 1000 / this.animation.labelShow);
                 }
             }
+            if(this.y_scaled){
+
+                var label2 = PCG.numberFormat(Math.round((item.val-minMax1.min)/minMax1.delta*minMax2.delta+minMax2.min))
+                this.ctx.axisYscaled(
+                    item.label,
+                    label2,
+                    item.top,
+                    this.getColor( this.columns[ 0 ], this._all[0].opacity*item.opacity ),
+                    this.getColor( this.columns[ 1 ], this._all[1].opacity*item.opacity ),
+                    PCG.color( this.scheme.axis, this.scheme.axis[ 3 ] * item.opacity )
+                );
+            }else{
+                this.ctx.axisY( item.label, item.top, PCG.color( this.scheme.yLabel, this.scheme.yLabel[ 3 ] * item.opacity ),
+                    PCG.color( this.scheme.axis, this.scheme.axis[ 3 ] * item.opacity )
+                );
+            }
+
+
         }
+        if(needUpdate)
+            this.update();
     };
-    let leftSetter = (left, width)=>{
-        return left/width*(width-XlabelSize)+XlabelSize/2;
-    };
-    PCG.updateXAxis = function updateYAxis() {
-        return
-        //D.removeChildren(this.els.xAxisLabelsStorage);
-        const from = this.frame.from,
-            to = this.frame.to,
-            delta = to - from,
+    PCG.updateXAxis = function updateXAxis(dt, from, to) {
+        var ctx = this.ctx.activate('x');
+        this.ctx.clear();
+        var needUpdate = false;
+
+        var delta = to - from,
             granule = delta / 6,
             bigBang = this.camera.offset,
-            initialTimeOffset = bigBang % granule,
-            spinOffTime = (from % granule) - initialTimeOffset;
+            initialTimeOffset = bigBang % granule;
 
+        //from -= granule;
 
         let i, val, left, date, item, _i;
         const hash = this.els.XAxisHash,
-            usedHash = {},
-            now = +new Date();
+            usedHash = {};
         let width = this.world.graph.width;
         const step = this.camera.AxisXGranule;
         for(i = from; i < to+step; i+=step){
-        //    val = from-spinOffTime+granule*i;
             val = (this.camera.offset % this.camera.AxisXGranule) - (this.frame.from % this.camera.AxisXGranule)+i;
+
             left = this.getX(val);
-            /*if(left<10){
-                left = 10;
-            }
-            if(left>this.world.graph.width-20){
-                if(i<to)
-                    continue;
-                left = this.world.graph.width - 20
-            }*/
-            //val = this.xToTime(left)
             date = PCG.dateFormatter(val);
 
-            usedHash[val] = true;
+            usedHash[date] = true;
 
-            if(val in hash){
-                item = hash[val];
-                if(item.destroy !== false){
-                    item.destroy = false;
-                    item.label.classList.remove('hide');
-                    item.label.classList.add('visible');
-                }
-                if(item.visible === false){
-                    item.visible = true;
-                    item.label.classList.add('visible');
-                }
-                item.label.style.left = leftSetter(left,width) +'px';
+            if(date in hash){
+
+                item = hash[date];
+                item.visible = true;
+                item.left = left;//label.style.left = leftSetter(left,width) +'px';
             }else{
-                if(this.XAxisLabelCount>40){
+                if(this.XAxisLabelCount>70){
                     continue;
                 }
-                item = hash[ val ] = {
+                item = hash[ date ] = {
                     val: val,
                     left: left,
-                    visible: false,
-                    destroy: false,
-                    label: D.div( {
-                        cls: 'pcg-x-axis-label',
-                        style: {
-                            left: leftSetter(left,width) + 'px'
-                        },
-                        renderTo: this.els.xAxisLabelsStorage
-                    }, date )
+                    visible: true,
+                    label: date,
+                    opacity: 1
                 };
                 this.XAxisLabelCount++;
             }
-
         }
-        const xAxisLabelsStorage = this.els.xAxisLabelsStorage;
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.font = this.constsDPR.labelFont+'px HelveticaNeue-Light, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif';
 
         for(val in hash){
-
+            item = hash[val];
             if(!(val in usedHash)){
-                item = hash[val];
+                needUpdate = true;
                 let left = this.getX(item.val);
-                item.label.style.left = leftSetter(left,width)+'px';
-                if(item.destroy === false){
-                    item.destroy = now + 400;
-                    item.label.classList.add('hide');
-                    item.label.classList.remove('visible');
-                } else {
-                    if(item.destroy<now){
-                        xAxisLabelsStorage.removeChild(item.label);
-                        delete hash[val];
-                        this.XAxisLabelCount--;
-                    }else{
-                        this.update();
-                    }
+                item.visible = false;
+                item.left = left;
+                item.opacity = Math.max(0,item.opacity - dt*1000/this.animation.labelHide);
+                if(item.opacity <= 0){
+                    delete hash[val];
+                    this.XAxisLabelCount--;
+                    continue;
+                }
+            }else{
+                if(item.opacity<1){
+                    needUpdate = true;
+                    item.opacity = Math.min(1,item.opacity + dt * 1000 / this.animation.labelShow);
                 }
             }
+
+            ctx.fillStyle = PCG.color(this.scheme.xLabel, this.scheme.xLabel[3]*item.opacity);
+            ctx.fillText(item.label, item.left, 6)
         }
+        if(needUpdate)
+            this.update();
         //console.log(bigBang)
     };
 })(window['PCG']);

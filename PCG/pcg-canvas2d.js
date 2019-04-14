@@ -1,19 +1,6 @@
 (function(PCG){
 
-    var h2d = function(a){return parseInt(a,16)/255;};
-    var h2i = function(a) {return parseInt(a,16);};
-    var hex2float = PCG.h2f = function(clr) {
-        if(clr.length === 3){
-            return clr.split('').map(h2i).concat(1);
-        }else{
-            return [
-                h2i(clr.substr(0,2)),
-                h2i(clr.substr(2,2)),
-                h2i(clr.substr(4,2)),
-                1];
 
-        }
-    };
     const sqrt = Math.sqrt;
     const Point = function(x,y) {
         if(x instanceof Point){
@@ -74,36 +61,69 @@
 
     PCG.Canvas2d = function(canvas, cfg) {
         this.c = canvas;
-        this.tmp = document.createElement("canvas");
-        this.ctx = this.tmp.getContext('2d', {alpha:false});
+        this.tmp = {};
+
+
+        this.createTmpCtx('shadow');
+
+        this.createTmpCtx('graph');
+        this.createTmpCtx('nav');
+        this.createTmpCtx('navWrap');
+        this.createTmpCtx('circularCorners', true);
+        this.createTmpCtx('navWindow', true);
+        this.createTmpCtx('x');
 
 
         this.ctxReal = this.c.getContext('2d', {alpha:false});
+        this.ctxReal.imageSmoothingEnabled = false;
+        this.parent = cfg;
         this.consts = cfg.constsDPR;
         this.init();
 
 
     };
     PCG.Canvas2d.prototype = {
+        current: null,
+        createTmpCtx: function(name, alpha) {
+            var el = document.createElement("canvas");
+            var ctx = el.getContext('2d', {alpha:alpha||false});
+            ctx.imageSmoothingEnabled = false;
+            this.tmp[name] = {el: el, ctx: ctx};
+        },
+        activate: function(name) {
+            this.current = this.tmp[name];
+            return this.ctx = this.tmp[name].ctx;
+        },
+        tmpHeight: function(name, height,width) {
+            this.tmp[name].el.height = this.tmp[name].height = height;
+
+            this.tmp[ name ].el.width = this.tmp[name].width = width || this.w;
+
+            this.tmp[name].imageData = null;
+        },
         scene: null,
         init: function() {
             //this.gl.clearColor(0, 0, 0, 0);
             this.resize();
             this.scene = [];
         },
-        clear: function() {
-            //this.ctx.fillStyle = 'transparent';
-            //this.ctx.fillRect(0,0,this.w,this.h);
-            var h =(this.consts.graphicHeight+this.consts.graphicPadding)|0;
-            if(!this.imageData){
+        clear: function(color) {
+            var current = this.current,
+                h = current.height,
+                w = current.width;
+            this.ctx.fillStyle = color||PCG.color(this.scheme.background);//'transparent';
+            this.ctx.fillRect(0,0,w,h);
+            /*var current = this.current;
+            var h = current.height;//(this.consts.graphicHeight+this.consts.graphicPadding)|0;
+            if(!current.imageData){
                 //this.ctx.clearRect(0,0,this.w,this.h);
-                this.ctx.fillStyle = this.consts.background;
-                this.ctx.fillRect(0,0,this.w,h);
-                this.imageData = this.ctx.getImageData(0,0,this.w,h);
+                current.ctx.fillStyle = PCG.color(this.scheme.background);
+                current.ctx.fillRect(0,0,this.w,h);
+                current.imageData = current.ctx.getImageData(0,0,this.w,h);
 
             }else{
-                this.ctx.putImageData( this.imageData,0,0,0,0,this.w,h);
-            }
+                current.ctx.putImageData( current.imageData,0,0,0,0,this.w,h);
+            }*/
         },
         /*clear: function() {
             var h =(this.consts.graphicHeight+this.consts.graphicPadding)|0;
@@ -111,12 +131,40 @@
             this.ctx.fillRect(0,0,this.w,h);
         },*/
         resize: function() {
+            this.scheme = this.parent.scheme;
             const c = this.c,
                 tmp = this.tmp;
-            this.w = c.width = tmp.width = c.clientWidth*PCG.DPR;
+            this.w = c.width =/*c.width =
+                tmp.shadow.el.width =
+                tmp.graph.el.width =
+                tmp.nav.el.width =
+                tmp.navWrap.el.width =
+                tmp.x.el.width =*/
+                    c.clientWidth*PCG.DPR;
+
             this.h = c.height = c.clientHeight*PCG.DPR;
-            tmp.height = this.consts.graphicHeight;
+
+            this.tmpHeight('graph', this.consts.graphicHeight);
+            this.tmpHeight('x', this.consts.axeX);
+            this.tmpHeight('nav', this.consts.navigationHeight, this.w-this.consts.paddingLeft - this.consts.paddingRight);
+            var pad = (this.consts.navigationWrapperHeight-this.consts.navigationHeight)/2;
+            this.tmpHeight('navWrap', this.consts.navigationWrapperHeight,
+                this.w-this.consts.paddingLeft - this.consts.paddingRight+pad*2);
+            this.tmpHeight('circularCorners', this.consts.navigationRadius*2,this.consts.navigationRadius*2);
+            this.tmpHeight('navWindow', this.consts.navigationWrapperHeight,this.consts.navWindowDraggerWidth*2);
+
+            this.tmpHeight('shadow', this.consts.graphicHeight+
+                this.consts.graphicPadding+
+                this.consts.axeX+
+                this.consts.navigationHeight+
+                this.consts.navWindowOverlap);
+
             this.imageData = null;
+            this.ctxReal.fillStyle = PCG.color(this.scheme.background);
+            this.ctxReal.fillRect(0,0,this.w,this.h);
+
+            this.updateCircle();
+            this.updateNavWindowSprite();
         },
         graph: function(time, arr, from, to, width, color) {
 
@@ -153,7 +201,7 @@
             var h = this.consts.graphicHeight;
             ctx.moveTo(time[from], h);
             ctx.lineTo(time[from], arr[from]);
-            for(var i = from+1; i<to; i++){
+            for(var i = from+1; i<=to; i++){
                 var last = i-1;
 
                 ctx.lineTo(
@@ -172,24 +220,178 @@
             ctx.lineTo(time[i-1]+(time[i-1]-time[i-2]), h);
             ctx.fill();
         },
-        axisY: function(pos) {
-            pos = (pos|0)+0.5;
-            this.ctx.strokeStyle = '#182d3b0a';
-            this.ctx.lineWidth= 1;
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.consts.paddingLeft, pos);
-            this.ctx.lineTo(this.w-this.consts.paddingRight, pos);
-            this.ctx.stroke();
+        axisY: function(text, pos, labelColor, axisColor) {
+            pos = (pos|0)+this.consts.axisWidth/2;
+
+            var ctx = this.ctx;
+            ctx.fillStyle = labelColor;
+            ctx.strokeStyle = axisColor;
+            ctx.beginPath();
+            ctx.moveTo(this.consts.paddingLeft, pos);
+            ctx.lineTo(this.w-this.consts.paddingRight, pos);
+            ctx.stroke();
+            ctx.fillText(text, this.consts.paddingLeft, pos-this.consts.axisYLabelPaddingBottom);
+
+        },
+        axisYscaled: function(text1, text2, pos, labelColor1, labelColor2, axisColor) {
+            pos = (pos|0)+this.consts.axisWidth/2;
+
+            var ctx = this.ctx;
+
+            ctx.strokeStyle = axisColor;
+            ctx.beginPath();
+            ctx.moveTo(this.consts.paddingLeft, pos);
+            ctx.lineTo(this.w-this.consts.paddingRight, pos);
+            ctx.stroke();
+            ctx.textAlign = "left";
+            ctx.fillStyle = labelColor1;
+            ctx.fillText(text1, this.consts.paddingLeft, pos-this.consts.axisYLabelPaddingBottom);
+            ctx.textAlign = "right";
+            ctx.fillStyle = labelColor2;
+            ctx.fillText(text2, this.w-this.consts.paddingRight, pos-this.consts.axisYLabelPaddingBottom);
         },
         render: function() {
-            /*var ctx = this.ctx;
-            this.scene.forEach(function(item) {
-                ctx.strokeStyle = item.color;
-                ctx.lineWidth = item.width;
-                ctx.lineJoin = 'round';
-                ctx.stroke(item.path);
-            });*/
-            this.ctxReal.drawImage(this.tmp,0,0)
+
+            this.ctxReal.drawImage(this.tmp.graph.el,0,0);
+            this.ctxReal.drawImage(this.tmp.x.el,0,this.consts.graphicHeight);
+
+            var pad = (this.consts.navigationWrapperHeight-this.consts.navigationHeight)/2;
+
+            this.updateNavWindow();
+
+            this.ctxReal.drawImage(this.tmp.navWrap.el,
+                this.consts.paddingLeft-pad,this.consts.graphicHeight+this.tmp.x.height-pad);
+            //this.ctxReal.restore();
+        },
+        updateNavWindow: function() {
+
+            this.activate('navWrap');
+            this.clear();
+
+            var wrap = this.tmp.navWrap,
+                ctx = wrap.ctx,
+                w = wrap.width,
+                h = wrap.height,
+                pad = (this.consts.navigationWrapperHeight-this.consts.navigationHeight)/2;
+
+            ctx.drawImage(
+                this.tmp.nav.el,
+                pad,
+                pad
+            );
+
+            var parent = this.parent;
+            var resizeOffset = this.consts.resizeOffset;
+
+            var minDate = parent.minDate;
+            var maxDate = parent.maxDate;
+            var momentumDelta = ( parent.maxDate - minDate );
+
+            if(parent.frame.to === null){
+                var lastDate = parent.timeline[parent.timeline.length-1][0];
+                parent.frame = {to: lastDate, from: lastDate+parent.frame.from}
+            }
+
+            const left = (((parent.frame.from-minDate)/momentumDelta*(w-pad*2))|0),
+                rightWidth = (((maxDate-parent.frame.to)/momentumDelta*(w-pad*2)+pad)|0);
+
+            ctx.fillStyle =PCG.color(this.scheme.scrollBG);
+            ctx.fillRect(pad,pad, left,h-pad*2);
+
+            var right = w-pad;
+
+            ctx.fillRect(right-rightWidth, pad, rightWidth,h-pad*2);
+            this.circulize(ctx,w, h, pad)
+
+            // draw ears
+            ctx.drawImage(this.tmp.navWindow.el,0,0,
+                this.consts.navWindowDraggerWidth, this.consts.navigationWrapperHeight,
+                left, 0,
+                this.consts.navWindowDraggerWidth, this.consts.navigationWrapperHeight);
+
+            ctx.drawImage(this.tmp.navWindow.el,this.consts.navWindowDraggerWidth,0,
+                this.consts.navWindowDraggerWidth, this.consts.navigationWrapperHeight,
+                right-rightWidth-this.consts.navWindowDraggerWidth+pad*2, 0,
+                this.consts.navWindowDraggerWidth, this.consts.navigationWrapperHeight);
+
+            //draw top/bottom lines
+
+            var lineLeft = left+this.consts.navWindowDraggerWidth,
+                lineWidth = right-rightWidth-this.consts.navWindowDraggerWidth*2+pad*2-left;
+            ctx.drawImage(this.tmp.navWindow.el,
+                this.consts.navWindowDraggerWidth,pad*2,
+                pad, pad,
+                lineLeft, 0,
+                lineWidth, pad);
+
+            ctx.drawImage(this.tmp.navWindow.el,
+                this.consts.navWindowDraggerWidth,pad*2,
+                pad, pad,
+                lineLeft, h-pad,
+                lineWidth, pad);
+
+        },
+        circulize: function(ctx, w, h, pad) {
+            pad = pad || 0;
+            var r = this.consts.navigationRadius,
+                circulEl = this.tmp.circularCorners.el;
+
+            ctx.drawImage(
+                circulEl,
+                0,0,
+                r,r,
+
+                pad,
+                pad,
+                r,r
+            );
+
+            ctx.drawImage(
+                circulEl,
+                r,0,
+                r,r,
+                w-r-pad,
+                pad,
+                r,r
+            );
+
+            ctx.drawImage(
+                circulEl,
+                0,r,
+                r,r,
+                pad,
+                h-r-pad,
+                r,r
+            );
+
+            ctx.drawImage(
+                circulEl,
+                r,r,
+                r,r,
+                w-r-pad,
+                h-r-pad,
+                r,r
+            );
+        },
+        updateCircle: function() {
+            var ctx = this.activate('circularCorners'),
+                r = this.consts.navigationRadius;
+            this.clear();
+            ctx.globalCompositeOperation = 'destination-out';
+
+            ctx.arc(r,r,r,0,Math.PI*2);
+            ctx.fill();
+        },
+        updateNavWindowSprite: function() {
+            var ctx = this.activate('navWindow');
+            this.clear(PCG.color(this.scheme.scrollSelector));
+
+            ctx.globalCompositeOperation = 'destination-out';
+            this.circulize(ctx,this.current.width,this.current.height);
+
+
+
+
         }
     };
 })(window['PCG']);

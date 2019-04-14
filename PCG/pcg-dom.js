@@ -41,8 +41,6 @@
         };
 
         //this.GL = new PCG.GL(this.els.graph);
-        this.ctx = new PCG.Canvas2d(this.els.graph, this);
-
         this.XAxisLabelCount = 0;
         this.els.tooltip.appendChild(this.els.tooltipDate);
         this.els.tooltip.appendChild(this.els.tooltipInfo);
@@ -61,7 +59,7 @@
         let toLeft = true;
 
         const resizeMove = (e)=>{
-            console.log('move', e.type);
+            //console.log('move', e.type);
             let point = e.clientX;
             let moved = pxToTime(point-start);
             if(toLeft){

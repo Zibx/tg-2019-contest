@@ -1,5 +1,6 @@
 (function(PCG){
     var D = PCG.D;
+    var isVisible = function(el) {return el.show;};
     PCG.initCheckboxes = function initCheckboxes(){
         var _self = this,
             switchesEl = this.renderTo.switches;
@@ -8,9 +9,12 @@
             switchesEl.removeChild( switchesEl.lastChild );
         }
         let list = [];
-        this.columns.forEach( function( name, i ){
+        var columns = this.columns;
+        columns.forEach( function( name, i ){
             var dataRow = { name: name, show: true, i: i, opacity: 1 };
             list.push( dataRow );
+            if(columns.length === 1)
+                return;
             D.label( {
                     cls: 'pcg-checkbox-wrapper',
                     renderTo: switchesEl
@@ -21,7 +25,8 @@
                     attr: { type: 'checkbox', checked: true },
                     on: {
                         change: ( e ) => {
-                            if(e.target.checked === false && _self._visible.length === 1){
+                            if(e.target.checked === false && _self._all.filter(isVisible).length === 1){
+                                // PREVENT
                                 e.target.checked = true;
                                 setTimeout(function() {
                                     e.target.checked = true
