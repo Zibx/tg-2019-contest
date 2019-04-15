@@ -25,6 +25,7 @@
             visible = this._getVisible(),
 
             width = this.world.graph.width,
+            height = this.constsDPR.graphicHeight,
             momentumPaddingLeft = momentumDelta / width * this.constsDPR.paddingLeft,
             momentumPaddingRight = momentumDelta / width * this.constsDPR.paddingRight;
 
@@ -98,6 +99,45 @@
 
         this.ctx.clear();
 
+        var unscale = false;
+        if(this.warTime){
+            if(this.unwar){
+                this.warDuration-=dt;
+            }else{
+                this.warDuration+=dt;
+            }
+
+            var outPerc = this.warDuration*2;
+            console.log(outPerc)
+            if((outPerc>1 && !this.unwar)|| outPerc<0){
+                this.warTime = false;
+                ctx.globalAlpha = 1;
+            }else{
+                ctx.globalAlpha = 1-outPerc;
+                var aP = this.animationPercent
+                outPerc*=outPerc;
+                var dx = width*outPerc*outPerc;
+                var leftSide = width*aP,
+                    rightSide = width-leftSide;
+                var left0 = leftSide-leftSide*(1-outPerc);
+                var right0 = leftSide+width*(1-aP)*(1-outPerc);
+                ctx.drawImage( this.ctx.tmp.graphBackup.el,
+                    left0, 0,
+                    right0-left0, height,
+
+                    0,0,width,height );
+                ctx.globalAlpha = outPerc;
+
+
+                var dl = limits.to - limits.from;
+                var left1 = dl*aP;
+
+                limits.from = (limits.from+left1-left1*(outPerc))|0;
+                limits.to = (limits.to-dl*(1-aP)+dl*(1-aP)*(outPerc))|0
+            }
+            this.update();
+        }
+
         ctx.lineWidth = graphStrokeWidth;
         ctx.lineJoin = 'bevel';
 
@@ -131,6 +171,8 @@
                 this.ctx.area( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
             }
         }
+
+
 
         var showSelection = false;
         var tooltipSlice = -1;

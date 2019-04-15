@@ -80,6 +80,7 @@
 
         this.createTmpCtx('shadow');
 
+        this.createTmpCtx('graphBackup');
         this.createTmpCtx('graph');
         this.createTmpCtx('nav');
         this.createTmpCtx('navWrap');
@@ -182,6 +183,7 @@
     };
 
     PCG.Canvas2d.prototype = {
+
         current: null,
         createTmpCtx: function(name, alpha) {
             var el = document.createElement("canvas");
@@ -199,6 +201,7 @@
             this.tmp[ name ].el.width = this.tmp[name].width = width || this.w;
 
             this.tmp[name].imageData = null;
+            this.tmp[name].ctx.imageSmoothingEnabled = false;
         },
         scene: null,
         init: function() {
@@ -237,6 +240,7 @@
             this.h = c.height = c.clientHeight*PCG.DPR;
 
             this.tmpHeight('graph', DPRc.graphicHeight);
+            this.tmpHeight('graphBackup', DPRc.graphicHeight);
             this.tmpHeight('x', DPRc.axeX);
             this.tmpHeight('nav', DPRc.navigationHeight, this.w-DPRc.paddingLeft - DPRc.paddingRight);
             var pad = (DPRc.navigationWrapperHeight-DPRc.navigationHeight)/2;
@@ -455,6 +459,9 @@
                 lineLeft, h-pad,
                 lineWidth, pad);
 
+        },
+        backup: function() {
+            this.tmp.graphBackup.ctx.drawImage(this.tmp.graph.el,0,0);
         },
         barSelection: function(ctx, from, to, opacity) {
             ctx.fillStyle = PCG.color(this.scheme.background,0.5*opacity);

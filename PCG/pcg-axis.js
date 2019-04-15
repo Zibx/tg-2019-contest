@@ -15,7 +15,7 @@
                 return;
             this.ctx.axisY( this.getY1( i ) )
         }*/
-return
+
         var ctx = this.ctx.activate('graph');
 
 
@@ -47,10 +47,14 @@ return
             var minMax2 = this.camera.minMax2;
         }
 
-        var out = [roundedFrom];
-        var i, val;
+        var out = [];//roundedFrom];
+        var i, val,
+            canUse = {};
 
-        for(i = 1; i < count; i++){
+
+
+
+        for(i = 0; i < count; i++){
             out.push(Math.round((roundedFrom+ rounded*i)/scale)*scale)
         }
 
@@ -58,6 +62,11 @@ return
 
             out = [0,25,50,75,100];
             getY = this.getPercentY
+        }else{
+            var tinyChange = delta1/16;
+            for(var key in hash){
+                canUse[Math.round(hash[key].val/tinyChange)] = key;
+            }
         }
         var now = +new Date(),
 
@@ -66,8 +75,13 @@ return
             usedHash = {};
 
         for(i = 0; i < count; i++){
+            val = out[i];
+            var nearlyVal = Math.round(val/tinyChange);
+            if(nearlyVal in canUse){
+                val = hash[canUse[nearlyVal]].val;
+            }
 
-            var pos = getY.call(this, out[i]);
+            var pos = getY.call(this, val);
 
             if(pos<graphHeight*1.01 && pos>0.05){
                 val = out[i];
@@ -122,13 +136,13 @@ return
                     item.label,
                     label2,
                     item.top,
-                    this.getColor( this.columns[ 0 ], this._all[0].opacity*item.opacity ),
-                    this.getColor( this.columns[ 1 ], this._all[1].opacity*item.opacity ),
-                    PCG.color( this.scheme.axis, this.scheme.axis[ 3 ] * item.opacity )
+                    this.getColor( this.columns[ 0 ], this._all[0].opacity*item.opacity*item.opacity ),
+                    this.getColor( this.columns[ 1 ], this._all[1].opacity*item.opacity*item.opacity ),
+                    PCG.color( this.scheme.axis, this.scheme.axis[ 3 ] * item.opacity*item.opacity )
                 );
             }else{
-                this.ctx.axisY( item.label, item.top, PCG.color( this.scheme.yLabel, this.scheme.yLabel[ 3 ] * item.opacity ),
-                    PCG.color( this.scheme.axis, this.scheme.axis[ 3 ] * item.opacity )
+                this.ctx.axisY( item.label, item.top, PCG.color( this.scheme.yLabel, this.scheme.yLabel[ 3 ] * item.opacity*item.opacity ),
+                    PCG.color( this.scheme.axis, this.scheme.axis[ 3 ] * item.opacity*item.opacity )
                 );
             }
 
@@ -144,8 +158,7 @@ return
 
         var delta = to - from,
             granule = delta / 4,
-            bigBang = this.camera.offset,
-            initialTimeOffset = bigBang % granule;
+            bigBang = this.camera.offset;
 
         //from -= granule;
 
@@ -159,13 +172,15 @@ return
         var key;
         var canUse = {};
 
-        var tinyChange = granule/2;
-            /*for(key in hash){
+        var tinyChange = step/2;
+            for(key in hash){
                 canUse[Math.round(hash[key].val/tinyChange)] = key;
-            }*/
+            }
 
+
+        var l = delta/width*this.constsDPR.paddingLeft;
         for(i = from; i < to+step; i+=step){
-            val = ((this.camera.offset-this.frame.from) % this.camera.AxisXGranule) /*- (this.frame.from % this.camera.AxisXGranule)*/+i;
+            val = ((step*100000+this.camera.offset-this.frame.from) % step) /*- (this.frame.from % this.camera.AxisXGranule)*/+i;
 
             var nearlyVal = Math.round(val/tinyChange);
             if(nearlyVal in canUse){

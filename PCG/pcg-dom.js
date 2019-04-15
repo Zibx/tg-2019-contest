@@ -183,15 +183,15 @@
             if(state === LEFT){
 
                 var pointInTime = -delta/fullW*padd;
-                this.camera.offset+=pointInTime;
+                this.camera.offset-=pointInTime;
 
                 frame.from = context.startFrame + moved;
                 if(frame.from>frame.to-minWindow){
                     frame.from = frame.to-minWindow;
                 }
-                console.log(1);
                 pointInTime = (frame.to-frame.from)/fullW*padd;
-                this.camera.offset -= pointInTime;
+                this.camera.offset += pointInTime;
+                this.camera.offset = frame.to;
 
             }else{
                 /*var pointInTime = frame.from+delta/fullW*padd;
@@ -202,10 +202,10 @@
                     frame.to = frame.from+minWindow;
                 }
 
-                this.camera.offset = this.minDate;
+                this.camera.offset = frame.from;
+                //this.camera.offset = Math.random()*222222333333333332;
 /*                pointInTime = frame.from+(frame.to-frame.from)/fullW*padd;
                 this.camera.offset -= pointInTime;*/
-                console.log(2);
 
             }
 
@@ -237,7 +237,7 @@
                 this.camera.offset = frame.from;//unLeft;
             }*/
             this.updateXGranule(this.camera, this.frame);
-            this.camera.offset = frame.to;
+
             this.update();
         }
 

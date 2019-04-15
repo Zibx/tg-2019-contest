@@ -218,12 +218,27 @@
             this.maxDate = myData[ myData.length - 1 ][ 0 ];
 
 
+
+
             this.initCheckboxes();
             this.updatePreview = true;
             this.collectWorldInfo();
+
+            if(zoom){
+                this.camera = null;
+                this.warTime = true;
+                this.warDuration = 0;
+                this.ctx.backup();
+            }
+
             this.update();
-            setTimeout(this._update, 100);
+            var _self = this;
+            setTimeout(function() {
+                _self.updateXGranule(_self.camera, _self.frame);
+                _self.update();
+            }, 100);
         },
+        warTime: false,
         // GLOBAL minmaxes
         calculateMinMax: function() {
             var minMaxes = this.minMaxes = [],
@@ -701,6 +716,8 @@
 
         },
         zoomIn: function(slice) {
+            this.animationPercent = (this.timeline[slice]-this.frame.from)/(this.frame.to-this.frame.from);
+            this.unwar = false;
             var date = new Date(this.timeline[slice]);
             if(this.zoomType === PCG.ZOOM.LOAD){
                 var fileName = PCG.path.join(
@@ -715,6 +732,9 @@
             }
         },
         zoomOut: function() {
+            this.warTime = true;
+            this.unwar = true;
+            this.warDuration = 0.5;
             for(var i in this.backup){
                 this[ i ] = this.backup[ i ];
             }
@@ -722,7 +742,14 @@
             this.calculateMinMax();
             this.initCheckboxes();
             this.updatePreview = true;
-            this.update();
+            var _self = this;
+            this.els.XAxisHash = {};
+            _self._update();
+            _self.updateXGranule(_self.camera, _self.frame);
+            this.els.XAxisHash = {};
+            _self._update();
+            _self.updateXGranule(_self.camera, _self.frame);
+
         },
         updateZoomCls: function() {
             this.renderTo.header.className = ['title-row', this.zoomed? 'zoomed':'unzoomed'].join(' ');
@@ -845,8 +872,16 @@
                 frame: {from: this.frame.from, to: this.frame.to},
                 minDate: this.minDate,
                 maxDate: this.maxDate,
-                zoomed: this.zoomed
-            }
+                zoomed: this.zoomed,
+                camera: {
+                    offset: this.camera.offset,
+                    AxisXGranule: this.camera.AxisXGranule,
+                    minMax1: new PCG.MinMax(),
+                    minMax2: new PCG.MinMax()
+                }
+            };
+            this.backup.camera.minMax1.update(this.camera.minMax1);
+            this.backup.camera.minMax2.update(this.camera.minMax2);
         },
         scheme: {},
         setNightMode: function(val) {
