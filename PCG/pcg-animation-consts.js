@@ -7,5 +7,6 @@ PCG.animation = { // in milliseconds
     labelHide: 200,
     labelShow: 300,
 
-    tooltipOpacity: 100
+    tooltipOpacity: 100,
+    zoomTime:
 };

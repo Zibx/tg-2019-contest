@@ -16,9 +16,18 @@
             list.push( dataRow );
             if(columns.length === 1)
                 return;
-            D.label( {
+            var nameLabel = D.div({
+                cls: 'pcg-checkbox__text-wrapper',
+                style: {color: '#fff'}
+
+            }, _self.names[ name ]);
+            var label = D.label( {
                     cls: 'pcg-checkbox-wrapper',
-                    renderTo: switchesEl
+                    renderTo: switchesEl,
+                    style: {
+                        background: _self.getColor(name, 1),
+                        borderColor: _self.getColor(name, 1)
+                    }
                 },
                 // children
                 D.input( {
@@ -40,6 +49,9 @@
                                 list[ i ].show = e.target.checked;
                                 _self.updateVisible();
                             }
+                            label.style.background = e.target.checked?_self.getColor(name, 1):'transparent';
+                            nameLabel.style.color = !e.target.checked?_self.getColor(name, 1):'#ffffff';
+                            //debugger
                             e.preventDefault();
                         }
                     }
@@ -50,7 +62,7 @@
                             attr: {
                                 viewBox: "0 0 36 31",
                             },
-                            style: { fill: _self.getColor(name, 1)  }
+                            style: { fill: '#ffffff'  }
                         },
                         D.path( {
 
@@ -60,7 +72,7 @@
                         } )
                     )
                 ),
-                D.div({ cls: 'pcg-checkbox__text-wrapper'}, _self.names[ name ])
+                nameLabel
 
             );
 

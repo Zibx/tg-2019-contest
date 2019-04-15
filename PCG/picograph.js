@@ -160,6 +160,8 @@
             this.zoomed = !!zoom;
             this._visible = [];
             this.colors = {};
+            this.camera = null;
+
             for(var rowID in data.colors){
                 this.colors[rowID] = PCG.h2f(data.colors[rowID].substr(1));
             }
@@ -802,7 +804,7 @@
                 types: rTypes,
                 names: rNames
             };
-            debugger
+
             this.load(result, true);
 
         },
