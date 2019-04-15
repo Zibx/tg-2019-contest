@@ -1,6 +1,6 @@
 (function(PCG){
     var D = PCG.D;
-
+    var animation = PCG.animation;
     var DPR = PCG.DPR = window.devicePixelRatio;
     PCG.LOG2 = Math.log( 2 );
     PCG.zeroFn = function(){return 0};
@@ -8,15 +8,21 @@
     var opacityGetter = function(el) { return el.opacity;};
     var shouldDraw = function(el) { return el.opacity > 0;};
     var getI = function(el) { return el.i;};
+    var abs = Math.abs,
+        min = Math.min,
+        max = Math.max,
+        log = Math.log,
+        DPRc;
+
     PCG.prototype = {
 
         xToTime: PCG.zeroFn,
         getX: PCG.zeroFn,
-        getY1: function( val ){return (this.constsDPR.graphicHeight - ( val - this._y1MMIN ) * this._y1PXINDATA);},
-        getY2: function( val ){return (this.constsDPR.graphicHeight - ( val - this._y2MMIN ) * this._y2PXINDATA);},
+        getY1: function( val ){return (DPRc.graphicHeight - ( val - this._y1MMIN ) * this._y1PXINDATA);},
+        getY2: function( val ){return (DPRc.graphicHeight - ( val - this._y2MMIN ) * this._y2PXINDATA);},
         getPercentY: function( val ){
-            var h = this.constsDPR.graphicHeight,
-                top = this.constsDPR.labelFont+this.constsDPR.graphicPadding*2;
+            var h = DPRc.graphicHeight,
+                top = DPRc.labelFont+DPRc.graphicPadding*2;
 
             return top+(h-top) * (1- val/100);
         },
@@ -25,16 +31,6 @@
 
         _y2MMIN: 0,
         _y2PXINDATA: 1,
-
-        animation: { // in milliseconds
-            lastCheckboxShake: 500,
-            show: 500,
-            hide: 300,
-
-            labelHide: 200,
-            labelShow: 300,
-
-        },
 
         consts: {
             graphicHeight: 280,
@@ -65,6 +61,8 @@
             paddingRight: 20,
             axisYLabelPaddingBottom: 5,
 
+            selectionCircleRadius: 3.5,
+            selectionCircleBorder: 2,
             day: {
                 background: PCG.h2f('#FFFFFF'),
                 xLabel: PCG.h2f('#252529', 50), // CHECKED
@@ -99,7 +97,7 @@
         init: function(){
             this.day = true;
             this.clear();
-            this.constsDPR = {};
+            this.constsDPR = DPRc = {};
             this.updateConsts();
             this.initDOM();
 
@@ -277,7 +275,7 @@
             return { min: min, max: max, delta: delta };
         },
         _getMinMax: function( from, to ){
-            var l, _l, k, _k, i, _i;
+            var l, _l, k, _k, i, _i, DPRlc = DPRc;
             var minMaxesLocal = [],
                 raw = this.rawData;
 
@@ -299,7 +297,7 @@
                 var opac = this._getOpacity(),
                     cacheSum = this.graphCache[_k],
                     cacheSum2 = this.graphCache[_k+1],
-                    max = 0, min = Infinity,
+                    max = 0, min = data[ 1 ][1],
                     firstVisible,
                     maxOpacity = 0, visiblest;
                 for(k=0; k < _k; k++){
@@ -330,8 +328,8 @@
                         max = sum;
                     }
 
-                    cacheSum[i] = sum;
-                    cacheSum2[i] = sum;
+                    cacheSum2[i] = cacheSum[i] = sum;
+
                 }
                 for( k=0; k < _k; k++ ){
                     minMaxesLocal[k].max = max;
@@ -369,7 +367,7 @@
             }
             for( k = 0; k < _k; k++ ){
                 minMaxesLocal[k].updateDelta();
-                var delta = minMaxesLocal[k].delta/this.constsDPR.graphicHeight*(this.constsDPR.graphicPadding);// TODO: why graphicPadding?
+                var delta = minMaxesLocal[k].delta/DPRlc.graphicHeight*(DPRlc.graphicPadding);// TODO: why graphicPadding?
                 if(!zeroStarted){
                     minMaxesLocal[k].min -= delta;
                 }
@@ -458,7 +456,8 @@
         },
         updateGraphData: function(limits, preview, inCamera) {
             var camera = inCamera || this.camera,
-                height = preview ? this.constsDPR.navigationHeight : this.constsDPR.graphicHeight,
+                DPRlc = DPRc,
+                height = preview ? DPRlc.navigationHeight : DPRlc.graphicHeight,
                 raw = this.rawData,
                 cache = this.graphCache,
                 visible = this._getVisible(),
@@ -479,7 +478,7 @@
                     opacity;
                 if(this.percentage){
 
-                    var topPadding = preview?0:this.constsDPR.labelFont+this.constsDPR.graphicPadding*2;
+                    var topPadding = preview?0:DPRlc.labelFont+DPRlc.graphicPadding*2;
                     height-=topPadding;
                 }
                 for( v = this.columns.length-1; v >=0; v-- ){
@@ -525,40 +524,49 @@
         },
         updateVisible: function(dt) {
             if(dt === void 0)
-                dt = 0.001
+                dt = 0.001;
             dt *=1000;
 
             var all = this._all, row,
                 visibleChanged = false,
-                needMoreAnimation = false;
+                needMoreAnimation = false,
+                rowOpacity, i;
 
             for(var a = 0, _a = all.length; a<_a;a++){
                 row = all[a];
-                if(row.show === false && row.opacity>0){
+                rowOpacity = row.opacity;
+                if(row.show === false && rowOpacity>0){
                     needMoreAnimation = true;
-                    if(row.opacity === 1){
+                    if(rowOpacity === 1){
                         visibleChanged = true;
                     }
-                    row.opacity = Math.max(0, row.opacity - dt / this.animation.hide);
-                    if(row.opacity === 0){
+                    rowOpacity = row.opacity = max(0, rowOpacity - dt / animation.hide);
+                    if(rowOpacity === 0){
                         visibleChanged = true;
                     }
                 }
-                if(row.show === true && row.opacity<1){
+                if(row.show === true && rowOpacity<1){
                     needMoreAnimation = true;
-                    if(row.opacity === 0){
+                    if(rowOpacity === 0){
                         visibleChanged = true;
                     }
-                    row.opacity = Math.min(1, row.opacity + dt / this.animation.show);
-                    if(row.opacity === 1){
+                    rowOpacity = row.opacity = min(1, rowOpacity + dt / animation.show);
+                    if(rowOpacity === 1){
                         visibleChanged = true;
                     }
                 }
             }
             if(visibleChanged || !this._visible.length){
-                this._visible = this._all
-                    .filter( shouldDraw )
-                    .map( getI );
+                var _vis = this._visible;
+
+                i=0;
+                for(a = 0; a<_a;a++){
+                    if((row = all[a]).opacity>0){
+                        _vis[i++] = row.i;
+                    }
+                }
+                _vis.length = i;
+
             }
             if(needMoreAnimation){
                 this.updatePreview = true;
@@ -572,7 +580,7 @@
             var data = this.data,
                 min = 0, max = data.length - 1, current,
 
-                steps = Math.log( data.length ) / PCG.LOG2,
+                steps = log( data.length ) / PCG.LOG2,
                 i;
 
             for( i = 0; i < steps; i++ ){
@@ -591,6 +599,7 @@
         updateYAxis: PCG.updateYAxis,
         updateXAxis: PCG.updateXAxis,
         updateGraph: PCG.updateGraph,
+        drawTooltip: PCG.drawTooltip,
         update: function(){
             if( !this.shouldUpdate ){
                 this.shouldUpdate = true;
@@ -611,11 +620,17 @@
         lastHash: '',
         nextNavUpdate: 0,
         showTooltip: function( sliceID ){
-            this.tooltip = {
-                opacity: 0,
-                visible: true,
-                slice: sliceID
-            };
+            if(this.tooltip){
+                this.tooltip.visible = true;
+                this.tooltip.slice = sliceID;
+            }else{
+                this.tooltip = {
+                    opacity: 0,
+                    visible: true,
+                    slice: sliceID
+                };
+            }
+            this.update();
             return;
             var slice = this.data[ sliceID ],
                 time = slice[ 0 ],
@@ -680,8 +695,14 @@
             this.els.verticalMouseSlice.style.display = 'none';
             this._removeTooltipCircles();*/
         },
-        updateConsts: function() {
-            DPR = PCG.DPR = window.devicePixelRatio;
+        updateConsts: function(w) {
+            // TODO microbench and decrease DPR
+            var real = window.devicePixelRatio;
+
+            if(real>2)real/=2;
+            if(real>2)real/=2;
+
+            DPR = PCG.DPR = real;
             var constsDPR = this.constsDPR;
             for(var key in this.consts) if(this.consts.hasOwnProperty(key)){
                 if(typeof this.consts[key] === 'number'){
@@ -690,14 +711,16 @@
                     constsDPR[ key ] = this.consts[ key ];
                 }
             }
+            DPRc = constsDPR;
         },
         collectWorldInfo: function(){
 
 
-            this.updateConsts();
+
             var graphRect = this.renderTo.graph.getClientRects()[ 0 ];
 
             var canvasRect = this.els.graph.getBoundingClientRect();
+            this.updateConsts(canvasRect.width);
             var top = this.renderTo.graph.offsetTop+this.renderTo.graph.parentNode.offsetTop;
             var w = canvasRect.width*PCG.DPR;
 
@@ -727,6 +750,7 @@
             requestAnimationFrame( function(){
                 mnu.collectWorldInfo();
                 mnu.updatePreview = true;
+                this.nextNavUpdate = 0;
                 mnu.ctx.resize();
                 mnu._update();
             } );

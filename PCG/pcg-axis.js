@@ -1,6 +1,7 @@
 (function(PCG){
     var D = PCG.D;
     var XlabelSize = 45;
+    var animation = PCG.animation;
     PCG.updateYAxis = function updateYAxis(minMax, dt){
         /*var axeData = this.yAxis;
 
@@ -58,15 +59,15 @@ return
             out = [0,25,50,75,100];
             getY = this.getPercentY
         }
-        const now = +new Date();
+        var now = +new Date(),
 
-        const graphHeight = this.world.graph.height;
-        const offset = graphHeight + this.consts.XAxisHeight + this.consts.YAxisLabelPaddingBottom;
-        const usedHash = {};
+            graphHeight = this.world.graph.height,
+            offset = graphHeight + this.consts.XAxisHeight + this.consts.YAxisLabelPaddingBottom,
+            usedHash = {};
 
         for(i = 0; i < count; i++){
 
-            const pos = getY.call(this, out[i]);
+            var pos = getY.call(this, out[i]);
 
             if(pos<graphHeight*1.01 && pos>0.05){
                 val = out[i];
@@ -103,7 +104,7 @@ return
                 var pos = this.getY1(item.val);
                 item.visible = false;
                 item.top = pos;
-                item.opacity = Math.max(0,item.opacity - dt*1000/this.animation.labelHide);
+                item.opacity = Math.max(0,item.opacity - dt*1000/animation.labelHide);
                 if(item.opacity <= 0){
                     delete hash[val];
                     continue;
@@ -111,7 +112,7 @@ return
             }else{
                 if(item.opacity<1){
                     needUpdate = true;
-                    item.opacity = Math.min(1,item.opacity + dt * 1000 / this.animation.labelShow);
+                    item.opacity = Math.min(1,item.opacity + dt * 1000 / animation.labelShow);
                 }
             }
             if(this.y_scaled){
@@ -149,10 +150,10 @@ return
         //from -= granule;
 
         var i, val, left, date, item, _i;
-        const hash = this.els.XAxisHash,
+        var hash = this.els.XAxisHash,
             usedHash = {};
         var width = this.world.graph.width;
-        const step = this.camera.AxisXGranule;
+        var step = this.camera.AxisXGranule;
         for(i = from; i < to+step; i+=step){
             val = (this.camera.offset % this.camera.AxisXGranule) - (this.frame.from % this.camera.AxisXGranule)+i;
 
@@ -192,7 +193,7 @@ return
                 var left = this.getX(item.val);
                 item.visible = false;
                 item.left = left;
-                item.opacity = Math.max(0,item.opacity - dt*1000/this.animation.labelHide);
+                item.opacity = Math.max(0,item.opacity - dt*1000/animation.labelHide);
                 if(item.opacity <= 0){
                     delete hash[val];
                     this.XAxisLabelCount--;
@@ -201,7 +202,7 @@ return
             }else{
                 if(item.opacity<1){
                     needUpdate = true;
-                    item.opacity = Math.min(1,item.opacity + dt * 1000 / this.animation.labelShow);
+                    item.opacity = Math.min(1,item.opacity + dt * 1000 / animation.labelShow);
                 }
             }
 

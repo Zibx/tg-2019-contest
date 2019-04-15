@@ -9,11 +9,8 @@
         this.els = {
 
             graph: D.canvas({renderTo: around.graph}),
-            yAxisStorage: D.div({cls: 'pcg-yAxisStorage', renderTo: around.graph}),
-            verticalMouseSlice: D.div({cls: 'pcg-tooltip__vertical-slice', renderTo: around.graph}),
+         //   verticalMouseSlice: D.div({cls: 'pcg-tooltip__vertical-slice', renderTo: around.graph}),
 
-            yAxisLabelsStorage: D.div({cls: 'pcg-yAxisLabelsStorage', renderTo: around.graph}),
-            xAxisLabelsStorage: D.div({cls: 'pcg-xAxisLabelsStorage', renderTo: around.graph}),
 
             tooltip: D.div({cls: 'pcg-tooltip', renderTo: around.graph}),
             tooltipDate: D.div({cls: 'pcg-tooltip__date'}),

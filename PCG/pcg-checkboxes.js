@@ -1,6 +1,7 @@
 (function(PCG){
     var D = PCG.D;
     var isVisible = function(el) {return el.show;};
+    var animation = PCG.animation;
     PCG.initCheckboxes = function initCheckboxes(){
         var _self = this,
             switchesEl = this.renderTo.switches;
@@ -34,7 +35,7 @@
                                 e.target.classList.add('error-checkbox');
                                 setTimeout(function() {
                                     e.target.classList.remove('error-checkbox');
-                                }, _self.animation.lastCheckboxShake);
+                                }, animation.lastCheckboxShake);
                             }else{
                                 list[ i ].show = e.target.checked;
                                 _self.updateVisible();

@@ -4,11 +4,13 @@
             setTimeout(fn,0)
         };
     }
+    if(!('abs' in Math)){
+        Math.abs = function(a) {return a<0?-a:a;};
+    }
+    var pow = Math.pow;
     PCG.lerp = function(from, to, percent,n) {
-        if(isNaN(from+(to-from)*Math.pow(percent,1/n)))
-            debugger
         if(n)
-            return from+(to-from)*Math.pow(percent,1/n);
+            return from+(to-from)*pow(percent,1/n);
         else
             return from+(to-from)*percent;
     };

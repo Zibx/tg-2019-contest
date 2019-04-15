@@ -1,5 +1,6 @@
 (function(PCG){
-
+    var animation = PCG.animation,
+        DPRc;
 
     function roundedRect(ctx, x, y, width, height, radius) {
         ctx.beginPath();
@@ -90,11 +91,40 @@
         this.ctxReal = this.c.getContext('2d', {alpha:false});
         this.ctxReal.imageSmoothingEnabled = false;
         this.parent = cfg;
-        this.consts = cfg.constsDPR;
+        DPRc = cfg.constsDPR;
         this.init();
 
 
     };
+
+    PCG.drawTooltip = function(dt) {
+        var tooltip = this.tooltip,
+            needUpdate = false;
+        if(tooltip === null){
+            return;
+        }
+        dt*=1000;
+        if(tooltip.visible && tooltip.opacity<1){
+            tooltip.opacity = Math.min(1, tooltip.opacity+dt/animation.tooltipOpacity);
+            needUpdate = true;
+        }
+        if(!tooltip.visible && tooltip.opacity>0){
+            tooltip.opacity = Math.max(0, tooltip.opacity-dt/animation.tooltipOpacity);
+            if(tooltip.opacity === 0){
+                this.tooltip = null;
+                return;
+            }
+            needUpdate = true;
+        }
+
+        /*var slice = this.data[ tooltip.sliceID ],
+            time = slice[ 0 ],
+            visible = this._getVisible();
+*/
+        if(needUpdate)
+            this.update();
+    };
+
     PCG.Canvas2d.prototype = {
         current: null,
         createTmpCtx: function(name, alpha) {
@@ -127,7 +157,7 @@
             this.ctx.fillStyle = color||PCG.color(this.scheme.background);//'transparent';
             this.ctx.fillRect(0,0,w,h);
             /*var current = this.current;
-            var h = current.height;//(this.consts.graphicHeight+this.consts.graphicPadding)|0;
+            var h = current.height;//(DPRc.graphicHeight+DPRc.graphicPadding)|0;
             if(!current.imageData){
                 //this.ctx.clearRect(0,0,this.w,this.h);
                 current.ctx.fillStyle = PCG.color(this.scheme.background);
@@ -139,30 +169,31 @@
             }*/
         },
         /*clear: function() {
-            var h =(this.consts.graphicHeight+this.consts.graphicPadding)|0;
+            var h =(DPRc.graphicHeight+DPRc.graphicPadding)|0;
             this.ctx.fillStyle = '#fff';
             this.ctx.fillRect(0,0,this.w,h);
         },*/
         resize: function() {
             this.scheme = this.parent.scheme;
+            DPRc = this.parent.constsDPR;
             var c = this.c;
             this.w = c.width = c.clientWidth*PCG.DPR;
             this.h = c.height = c.clientHeight*PCG.DPR;
 
-            this.tmpHeight('graph', this.consts.graphicHeight);
-            this.tmpHeight('x', this.consts.axeX);
-            this.tmpHeight('nav', this.consts.navigationHeight, this.w-this.consts.paddingLeft - this.consts.paddingRight);
-            var pad = (this.consts.navigationWrapperHeight-this.consts.navigationHeight)/2;
-            this.tmpHeight('navWrap', this.consts.navigationWrapperHeight,
-                this.w-this.consts.paddingLeft - this.consts.paddingRight+pad*3);
-            this.tmpHeight('circularCorners', this.consts.navigationRadius*2,this.consts.navigationRadius*2);
-            this.tmpHeight('navWindow', this.consts.navigationWrapperHeight,this.consts.navWindowDraggerWidth*2);
+            this.tmpHeight('graph', DPRc.graphicHeight);
+            this.tmpHeight('x', DPRc.axeX);
+            this.tmpHeight('nav', DPRc.navigationHeight, this.w-DPRc.paddingLeft - DPRc.paddingRight);
+            var pad = (DPRc.navigationWrapperHeight-DPRc.navigationHeight)/2;
+            this.tmpHeight('navWrap', DPRc.navigationWrapperHeight,
+                this.w-DPRc.paddingLeft - DPRc.paddingRight+pad*3);
+            this.tmpHeight('circularCorners', DPRc.navigationRadius*2,DPRc.navigationRadius*2);
+            this.tmpHeight('navWindow', DPRc.navigationWrapperHeight,DPRc.navWindowDraggerWidth*2);
 
-            this.tmpHeight('shadow', c.height,c.width);/*this.consts.graphicHeight+
-                this.consts.graphicPadding+
-                this.consts.axeX+
-                this.consts.navigationHeight+
-                this.consts.navWindowOverlap);*/
+            this.tmpHeight('shadow', c.height,c.width);/*DPRc.graphicHeight+
+                DPRc.graphicPadding+
+                DPRc.axeX+
+                DPRc.navigationHeight+
+                DPRc.navWindowOverlap);*/
 
             this.imageData = null;
 
@@ -181,6 +212,7 @@
                 ctx.lineTo(time[i], arr[i])
             }
             ctx.stroke();
+            ctx.closePath();
             //ctx.stroke(new Path2D('M'+arr.slice(from,to).join('L')));
             //new Path2D('M'+arr.join('L')));
 
@@ -188,7 +220,7 @@
         area: function(time, arr, from, to, width, color) {
 
             var ctx = this.ctx;
-            var h = this.consts.graphicHeight;
+            var h = DPRc.graphicHeight;
 
             ctx.beginPath();
             ctx.moveTo(time[from], h);
@@ -199,12 +231,12 @@
             ctx.lineTo(time[i-1], h);
 
             ctx.fill();
-
+            ctx.closePath();
         },
         bar: function(time, arr, from, to, width, color) {
             var ctx = this.ctx;
             ctx.beginPath();
-            var h = this.consts.graphicHeight;
+            var h = DPRc.graphicHeight;
             ctx.moveTo(time[from], h);
             ctx.lineTo(time[from], arr[from]);
             for(var i = from+1; i<=to; i++){
@@ -226,51 +258,78 @@
             ctx.lineTo(time[i-1]+(time[i-1]-time[i-2]), h);
 
             ctx.fill();
+            ctx.closePath();
         },
         axisY: function(text, pos, labelColor, axisColor) {
-            pos = (pos|0)+this.consts.axisWidth/2;
+            pos = (pos|0)+DPRc.axisWidth/2;
 
             var ctx = this.ctx;
             ctx.fillStyle = labelColor;
             ctx.strokeStyle = axisColor;
             ctx.beginPath();
-            ctx.moveTo(this.consts.paddingLeft, pos);
-            ctx.lineTo(this.w-this.consts.paddingRight, pos);
+            ctx.moveTo(DPRc.paddingLeft, pos);
+            ctx.lineTo(this.w-DPRc.paddingRight, pos);
             ctx.stroke();
-            ctx.fillText(text, this.consts.paddingLeft, pos-this.consts.axisYLabelPaddingBottom);
+            ctx.closePath();
+            ctx.fillText(text, DPRc.paddingLeft, pos-DPRc.axisYLabelPaddingBottom);
+
+        },
+        circle: function(x,y,r,w,c) {
+            var ctx = this.ctx;
+            ctx.lineWidth = w;
+            ctx.strokeStyle = c;
+            ctx.fillStyle = PCG.color(this.scheme.background);
+            ctx.beginPath();
+            ctx.arc(x,y,r,0,Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+        },
+        axisX: function(pos,opacity) {
+            pos = (pos|0)+DPRc.axisWidth/2;
+            var ctx = this.ctx;
+            ctx.strokeStyle = PCG.color( this.scheme.axis, this.scheme.axis[ 3 ] * opacity );
+            ctx.beginPath();
+            ctx.moveTo(pos, 0);
+            ctx.lineTo(pos, DPRc.graphicHeight);
+            ctx.stroke();
+            ctx.closePath();
 
         },
         axisYscaled: function(text1, text2, pos, labelColor1, labelColor2, axisColor) {
-            pos = (pos|0)+this.consts.axisWidth/2;
+            pos = (pos|0)+DPRc.axisWidth/2;
 
             var ctx = this.ctx;
 
             ctx.strokeStyle = axisColor;
             ctx.beginPath();
-            ctx.moveTo(this.consts.paddingLeft, pos);
-            ctx.lineTo(this.w-this.consts.paddingRight, pos);
+            ctx.moveTo(DPRc.paddingLeft, pos);
+            ctx.lineTo(this.w-DPRc.paddingRight, pos);
             ctx.stroke();
+            ctx.closePath();
             ctx.textAlign = "left";
             ctx.fillStyle = labelColor1;
-            ctx.fillText(text1, this.consts.paddingLeft, pos-this.consts.axisYLabelPaddingBottom);
+            ctx.fillText(text1, DPRc.paddingLeft, pos-DPRc.axisYLabelPaddingBottom);
             ctx.textAlign = "right";
             ctx.fillStyle = labelColor2;
-            ctx.fillText(text2, this.w-this.consts.paddingRight, pos-this.consts.axisYLabelPaddingBottom);
+            ctx.fillText(text2, this.w-DPRc.paddingRight, pos-DPRc.axisYLabelPaddingBottom);
         },
         render: function() {
-            var ctx = this.activate('shadow');
+            var ctx = this.ctxReal;//activate('shadow');
+            //this.clear();
+            ctx.drawImage(this.tmp.graph.el,0,0);
+            ctx.drawImage(this.tmp.x.el,0,DPRc.graphicHeight);
 
-            this.ctxReal.drawImage(this.tmp.graph.el,0,0);
-            this.ctxReal.drawImage(this.tmp.x.el,0,this.consts.graphicHeight);
-
-            var pad = (this.consts.navigationWrapperHeight-this.consts.navigationHeight)/2;
+            var pad = (DPRc.navigationWrapperHeight-DPRc.navigationHeight)/2;
 
             this.updateNavWindow();
 
-            this.ctxReal.drawImage(this.tmp.navWrap.el,
-                this.consts.paddingLeft-pad,this.consts.graphicHeight+this.tmp.x.height-pad);
+            ctx.drawImage(this.tmp.navWrap.el,
+                DPRc.paddingLeft-pad,DPRc.graphicHeight+this.tmp.x.height-pad);
 
-            //this.ctxReal.drawImage(this.tmp.shadow.el);
+            //this.ctxReal.drawImage(this.tmp.shadow.el,0,0);
+
+
             //this.ctxReal.restore();
         },
         updateNavWindow: function() {
@@ -282,7 +341,7 @@
                 ctx = wrap.ctx,
                 w = wrap.width,
                 h = wrap.height,
-                pad = (this.consts.navigationWrapperHeight-this.consts.navigationHeight)/2;
+                pad = (DPRc.navigationWrapperHeight-DPRc.navigationHeight)/2;
 
             ctx.drawImage(
                 this.tmp.nav.el,
@@ -291,7 +350,7 @@
             );
 
             var parent = this.parent;
-            var resizeOffset = this.consts.resizeOffset;
+            var resizeOffset = DPRc.resizeOffset;
 
             var minDate = parent.minDate;
             var maxDate = parent.maxDate;
@@ -315,35 +374,51 @@
 
             // draw ears
             ctx.drawImage(this.tmp.navWindow.el,0,0,
-                this.consts.navWindowDraggerWidth, this.consts.navigationWrapperHeight,
+                DPRc.navWindowDraggerWidth, DPRc.navigationWrapperHeight,
                 left, 0,
-                this.consts.navWindowDraggerWidth, this.consts.navigationWrapperHeight);
+                DPRc.navWindowDraggerWidth, DPRc.navigationWrapperHeight);
 
-            ctx.drawImage(this.tmp.navWindow.el,this.consts.navWindowDraggerWidth,0,
-                this.consts.navWindowDraggerWidth, this.consts.navigationWrapperHeight,
-                right-rightWidth-this.consts.navWindowDraggerWidth+pad*2, 0,
-                this.consts.navWindowDraggerWidth, this.consts.navigationWrapperHeight);
+            ctx.drawImage(this.tmp.navWindow.el,DPRc.navWindowDraggerWidth,0,
+                DPRc.navWindowDraggerWidth, DPRc.navigationWrapperHeight,
+                right-rightWidth-DPRc.navWindowDraggerWidth+pad*2, 0,
+                DPRc.navWindowDraggerWidth, DPRc.navigationWrapperHeight);
 
             //draw top/bottom lines
 
-            var lineLeft = left+this.consts.navWindowDraggerWidth,
-                lineWidth = right-rightWidth-this.consts.navWindowDraggerWidth*2+pad*2-left;
+            var lineLeft = left+DPRc.navWindowDraggerWidth,
+                lineWidth = right-rightWidth-DPRc.navWindowDraggerWidth*2+pad*2-left;
             ctx.drawImage(this.tmp.navWindow.el,
-                this.consts.navWindowDraggerWidth,pad*2,
+                DPRc.navWindowDraggerWidth,pad*2,
                 pad, pad,
                 lineLeft, 0,
                 lineWidth, pad);
 
             ctx.drawImage(this.tmp.navWindow.el,
-                this.consts.navWindowDraggerWidth,pad*2,
+                DPRc.navWindowDraggerWidth,pad*2,
                 pad, pad,
                 lineLeft, h-pad,
                 lineWidth, pad);
 
         },
+        barSelection: function(ctx, from, to, opacity) {
+            ctx.fillStyle = PCG.color(this.scheme.background,0.5*opacity);
+
+            ctx.fillRect(
+                0,
+                0,
+                from,
+                DPRc.graphicHeight
+            );
+            ctx.fillRect(
+                to,
+                0,
+                this.w-to,
+                DPRc.graphicHeight
+            );
+        },
         circulize: function(ctx, w, h, pad) {
             pad = pad || 0;
-            var r = this.consts.navigationRadius,
+            var r = DPRc.navigationRadius,
                 circulEl = this.tmp.circularCorners.el;
 
             ctx.drawImage(
@@ -385,7 +460,7 @@
         },
         updateCircle: function() {
             var ctx = this.activate('circularCorners'),
-                r = this.consts.navigationRadius;
+                r = DPRc.navigationRadius;
             this.clear();
             ctx.globalCompositeOperation = 'destination-out';
 
@@ -400,8 +475,8 @@
             this.circulize(ctx,this.current.width,this.current.height);
 
             ctx.globalCompositeOperation = 'source-over';
-            var pimpaW = this.consts.navWindowDragHandleWidth,
-                pimpaH = this.consts.navWindowDragHandleHeight;
+            var pimpaW = DPRc.navWindowDragHandleWidth,
+                pimpaH = DPRc.navWindowDragHandleHeight;
             ctx.fillStyle = PCG.color(this.scheme.scrollDragHandle);
 
             roundedRect(ctx, this.current.width/4-pimpaW/2,
