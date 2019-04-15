@@ -190,16 +190,18 @@ img {
 }
 .title-wrapper {
     position: relative;
+    margin-bottom: 20px;
 }
 .title {
+    position: relative;
     font-size: 20px;
     font-weight: bold;
-    margin: 4px 6px 20px;
-
-    position: absolute;
-    opacity: 0;
+    margin: 4px 6px 0;
+    transition: all 0.3s ease;
+    transform-origin: top center;
 }
 .zoom-el {
+    position: absolute;
     display: flex;
     align-items: center;
     margin: 4px 0 0;
@@ -211,7 +213,26 @@ img {
     letter-spacing: -0.5px;
     background-color: transparent;
     border: 0;
+    opacity: 0;
+    transform: scale(1, 0) rotateX(90deg);
+    transform-origin: top center;
+    transition: all 0.3s ease;
  }
+.zoom-el:focus {
+    outline: none;
+    opacity: 0.9;
+}
+.zoomed .zoom-el {
+    position: relative;
+    opacity: 1;
+    z-index: 1;
+    transform: scale(1, 1) rotateX(0);
+}
+.zoomed .title {
+    position: absolute;
+    opacity: 0;
+    transform: scale(1, 0) rotateX(90deg);
+}
 .zoom-el-icon {
     flex: none;
     margin-right: 11px;
