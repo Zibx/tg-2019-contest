@@ -33,7 +33,7 @@
         _y2PXINDATA: 1,
 
         consts: {
-            graphicHeight: 280,
+            graphicHeight: 330,
             graphicPadding: 4,
             axeX: 31,
             navigationHeight: 50,
@@ -129,8 +129,9 @@
         down: PCG.down,
         longTap: PCG.longTap,
         up: PCG.up,
+        camera: null,
         clear: function(){
-            this.camera = null;
+            //this.camera = null;
             this.colors = {};
             this.data = [];
 
@@ -160,7 +161,7 @@
             this.zoomed = !!zoom;
             this._visible = [];
             this.colors = {};
-            this.camera = null;
+            //this.camera = null;
 
             for(var rowID in data.colors){
                 this.colors[rowID] = PCG.h2f(data.colors[rowID].substr(1));
@@ -711,6 +712,14 @@
                 this.customZoom(date);
             }
         },
+        zoomOut: function() {
+            for(var i in this.backup)
+                this[i] = this.backup[i];
+            this.calculateMinMax();
+            this.initCheckboxes();
+            this.updatePreview = true;
+            this.update();
+        },
         joinAndLoadData: function(data, dates, names, colors) {
 
             var rColors = {},
@@ -820,7 +829,11 @@
                 y_scaled: this.y_scaled,
                 data: this.data,
                 columns: this.columns,
-                _visible: this._visible
+                _visible: this._visible,
+                frame: {from: this.frame.from, to: this.frame.to},
+                minDate: this.minDate,
+                maxDate: this.maxDate,
+                zoomed: this.zoomed
             }
         },
         scheme: {},
