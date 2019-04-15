@@ -11,7 +11,7 @@ body {
 }
 
 .graph {
-    height: 392px;
+    height: 418px;
 }
 
 
@@ -39,7 +39,7 @@ body {
     position: absolute;
 }
 .graph svg, .graph canvas {
-    height: 368px;
+    height: 418px;
 }
 H1 {
     margin: 20px

@@ -53,7 +53,7 @@
     };
     var last = null;
     var context = {};
-
+    var doNotShowTooltip = false;
     PCG.down = function(e) {
         if(last && last !== this){
             last.hideTooltip();
@@ -65,19 +65,23 @@
         var x = point.x;
         if(y<=this.constsDPR.graphicHeight+this.constsDPR.axeX/2){
             var rect, gRect;
-            if(!this.zoomed && this.tooltip && (rect = this.tooltip.rect)){
-                gRect = this.world.graph;
-                if(x>=rect.left && x<=rect.left+rect.width && y>=rect.top && y<=rect.top+rect.height){
-                    state = TOOLTIP;
-                    this.zoomIn(this.tooltip.slice);
+            if(!doNotShowTooltip){
+                if( !this.zoomed && this.tooltip && ( rect = this.tooltip.rect ) ){
+                    gRect = this.world.graph;
+                    if( x >= rect.left && x <= rect.left + rect.width && y >= rect.top && y <= rect.top + rect.height ){
+                        state = TOOLTIP;
+                        this.zoomIn( this.tooltip.slice );
+                        this.hideTooltip();
+                        doNotShowTooltip = true;
+                    }else{
+                        state = GRAPHIC;
+                    }
                 }else{
                     state = GRAPHIC;
                 }
-            }else{
-                state = GRAPHIC;
-            }
-            if(state === GRAPHIC){
-                this.move(e);
+                if( state === GRAPHIC ){
+                    this.move( e );
+                }
             }
         }else{
 
@@ -113,7 +117,7 @@
                 b.style.overflow = 'hidden';
             }
         }
-        if(state !== GRAPHIC && state !== NONE){
+        if(state !== GRAPHIC && state !== NONE && state !== TOOLTIP){
             var frame = context.frame = this.frame;
             context.startFrame = frame.from;
             context.frameWidth = frame.to - frame.from;
@@ -172,10 +176,24 @@
         }else if(state === LEFT || state === RIGHT){
             var frame = context.frame,
                 moved = context.timeDelta/context.width*(point.x-startPoint.x);
+            var minWindow = (this.maxDate - this.minDate)/7;
             if(state === LEFT){
                 frame.from = context.startFrame + moved;
+                if(frame.from>frame.to-minWindow){
+                    frame.from = frame.to-minWindow;
+                }
             }else{
                 frame.to = context.startFrame + context.frameWidth + moved;
+                if(frame.to<frame.from+minWindow){
+                    frame.to = frame.from+minWindow;
+                }
+            }
+
+            if( frame.from <= this.minDate ){
+                frame.from = this.minDate;
+            }
+            if( frame.to >= this.maxDate ){
+                frame.to = this.maxDate;
             }
             /*if(toLeft){
                 frame.from = startFrame+moved;
@@ -219,10 +237,19 @@
 
         state = null;
         b.style.overflow = 'auto';
+        setTimeout(function() {
+            doNotShowTooltip = false;
+        },100);
     };
     
     PCG.initListeners = function initListeners() {
+        var _self = this;
+        this.renderTo.title.addEventListener('click', function() {
 
+            if(_self.zoomed){
+                _self.zoomOut();
+            }
+        });
         if(PCG.listen)
             return false;
         PCG.listen = true;
