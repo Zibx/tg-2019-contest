@@ -148,7 +148,7 @@
                             style: { color: this.getColor( name, 1 ) }
                         },
                         D.div( { cls: 'pcg-tooltip__info-item__count' }, PCG.numberFormat( val ) ),
-                        this.names[ name ]
+                        D.div( {cls: 'pcg-tooltip__info-item__label'}, this.names[ name ])
                     )
                 )
             }
