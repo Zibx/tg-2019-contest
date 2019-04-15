@@ -101,6 +101,7 @@ H1 {
     line-height: 20px;
     color: #43484B;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .error-checkbox + .pcg-checkbox__img-wrapper + .pcg-checkbox__text-wrapper {
