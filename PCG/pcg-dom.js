@@ -177,16 +177,36 @@
             var frame = context.frame,
                 moved = context.timeDelta/context.width*(point.x-startPoint.x);
             var minWindow = (this.maxDate - this.minDate)/7;
+            var delta = frame.to-frame.from;
+            var fullW = this.world.graph.width,
+                padd = this.constsDPR.paddingRight;
             if(state === LEFT){
+
+                var pointInTime = -delta/fullW*padd;
+                this.camera.offset+=pointInTime;
+
                 frame.from = context.startFrame + moved;
                 if(frame.from>frame.to-minWindow){
                     frame.from = frame.to-minWindow;
                 }
+                console.log(1);
+                pointInTime = (frame.to-frame.from)/fullW*padd;
+                this.camera.offset -= pointInTime;
+
             }else{
+                /*var pointInTime = frame.from+delta/fullW*padd;
+                this.camera.offset+=pointInTime;*/
+
                 frame.to = context.startFrame + context.frameWidth + moved;
                 if(frame.to<frame.from+minWindow){
                     frame.to = frame.from+minWindow;
                 }
+
+                this.camera.offset = this.minDate;
+/*                pointInTime = frame.from+(frame.to-frame.from)/fullW*padd;
+                this.camera.offset -= pointInTime;*/
+                console.log(2);
+
             }
 
             if( frame.from <= this.minDate ){
@@ -216,8 +236,7 @@
 
                 this.camera.offset = frame.from;//unLeft;
             }*/
-            var day = PCG.DAY;
-            this.camera.AxisXGranule = day * Math.pow(2, Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)));
+            this.updateXGranule(this.camera, this.frame);
             this.camera.offset = frame.to;
             this.update();
         }

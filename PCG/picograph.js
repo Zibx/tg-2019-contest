@@ -221,7 +221,6 @@
             this.initCheckboxes();
             this.updatePreview = true;
             this.collectWorldInfo();
-
             this.update();
             setTimeout(this._update, 100);
         },
@@ -421,13 +420,15 @@
             minMax1.updateDelta();
             minMax2.updateDelta();
             if(this.camera === null || camera){
-                var day = PCG.DAY;
+
+
                 var justCalc = !!camera;
                 camera = camera || {};
                 camera.minMax1 = minMax1;
                 camera.minMax2 = minMax2;
                 camera.offset = this.data[0][0];
-                camera.AxisXGranule = day * Math.pow(2,Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)));
+                this.updateXGranule(camera, this.frame);
+
 
                 if(!justCalc){
                     this.camera = camera;
@@ -725,6 +726,11 @@
         },
         updateZoomCls: function() {
             this.renderTo.header.className = ['title-row', this.zoomed? 'zoomed':'unzoomed'].join(' ');
+        },
+        updateXGranule: function(camera, frame) {
+            var dt = this.maxDate-this.minDate;
+            var minDelta = this.minDelta = dt<PCG.DAY*4?PCG.HOUR:PCG.DAY;
+            camera.AxisXGranule = minDelta * Math.pow(2,Math.round(Math.log(Math.ceil((frame.to-frame.from)/4/minDelta))/Math.log(2)));
         },
         joinAndLoadData: function(data, dates, names, colors) {
 

@@ -24,11 +24,15 @@
         minute = PCG.MINUTE = second * 60,
         hour = PCG.HOUR =  minute * 60,
         day = PCG.DAY = hour*24;
-    PCG.dateFormatter = function(date){
+    PCG.dateFormatter = function(date, minDelta){
         if(!(date instanceof Date)){
-            date = new Date(Math.round(date/day)*day);
+            date = new Date(Math.round(date/minDelta)*minDelta);
         }
-        return shortMonths[date.getMonth()] +' '+ date.getDate();
+        if(minDelta === day){
+            return shortMonths[ date.getMonth() ] + ' ' + date.getDate();
+        }else{
+            return date.getHours() + ':' + PCG.pad(date.getMinutes());
+        }
     };
     PCG.weekDateFormatter = function(date){
         if(!(date instanceof Date)){

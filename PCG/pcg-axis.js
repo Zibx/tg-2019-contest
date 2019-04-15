@@ -143,7 +143,7 @@ return
         var needUpdate = false;
 
         var delta = to - from,
-            granule = delta / 6,
+            granule = delta / 4,
             bigBang = this.camera.offset,
             initialTimeOffset = bigBang % granule;
 
@@ -154,13 +154,29 @@ return
             usedHash = {};
         var width = this.world.graph.width;
         var step = this.camera.AxisXGranule;
+        var minDelta = this.minDelta;
+
+        var key;
+        var canUse = {};
+
+        var tinyChange = granule/2;
+            /*for(key in hash){
+                canUse[Math.round(hash[key].val/tinyChange)] = key;
+            }*/
+
         for(i = from; i < to+step; i+=step){
-            val = (this.camera.offset % this.camera.AxisXGranule) - (this.frame.from % this.camera.AxisXGranule)+i;
+            val = ((this.camera.offset-this.frame.from) % this.camera.AxisXGranule) /*- (this.frame.from % this.camera.AxisXGranule)*/+i;
 
-            left = this.getX(val);
-            date = PCG.dateFormatter(val);
+            var nearlyVal = Math.round(val/tinyChange);
+            if(nearlyVal in canUse){
+                date = canUse[nearlyVal]
+                left = this.getX( hash[date].val );
+            }else{
+                left = this.getX( val );
+                date = PCG.dateFormatter( val, minDelta );
 
-            usedHash[date] = true;
+            }
+            usedHash[ date ] = true;
 
             if(date in hash){
 

@@ -9,12 +9,13 @@
 
         let minMax = this._getMinMax( limits.from, limits.to );
         if(this.camera === null){
-            let day = 1000*60*60*24;
+
             this.camera = {
                 minMax: minMax,
-                offset: this.data[0][0],
-                AxisXGranule: day * Math.pow(2,Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)))
+                offset: this.data[0][0]
             };
+            this.updateXGranule();
+
         }else{
             if(Math.abs(this.camera.minMax.max - minMax.max)>0.01) {
                 this.update();
