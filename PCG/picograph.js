@@ -110,13 +110,14 @@
             }
 
         },
-        loadData: function() {
+        loadData: function(fileName, zoom, cb) {
             var me = this;
             /*me.load(window.data[this.dataSource.substr(-1)-1])
             return;*/
 
-            PCG.GET(PCG.path.join(this.dataSource, 'overview.json'), function(err, data) {
-                me.load( data );
+            PCG.GET(PCG.path.join(this.dataSource, fileName||'overview.json'), cb || function(err, data) {
+                me.clear();
+                me.load( data, zoom );
             });
 
         },
@@ -140,21 +141,24 @@
             };
 
             this.columns = [];
-            for( var i in this.els ){
+            /*for( var i in this.els ){
                 if( this.els.hasOwnProperty( i ) ){
                     var el = this.els[ i ];
                     el.parentNode.removeChild( el )
                 }
             }
-            this.els = null;
+            this.els = null;*/
             this.world = null;
             this._visible = [];
         },
         getColor: function(name, opacity) {
             return PCG.color(this.colors[ name ], opacity);
         },
-        load: function( data ){
-
+        load: function( data, zoom ){
+            this.data = [];
+            this.columns = [];
+            this.zoomed = !!zoom;
+            this._visible = [];
             this.colors = {};
             for(var rowID in data.colors){
                 this.colors[rowID] = PCG.h2f(data.colors[rowID].substr(1));
@@ -163,12 +167,22 @@
                 myData = this.data,
                 wholeData = columns.map(function(list){return list.slice(1);});
             this.rawData = wholeData.splice(1);
-            this.timeline = wholeData[0];
+            var timeline = this.timeline = wholeData[0];
             this.names = data.names;
             this.types = data.types;
             this.percentage = !!data.percentage;// – true for percentage based values.
             this.stacked = !!data.stacked;// – true for values stacking on top of each other.
             this.y_scaled = !!data.y_scaled;// – true for charts with 2 Y axes
+
+            if(zoom){
+                this.frame.from = timeline[(timeline.length/7*2)|0];
+                this.frame.to = timeline[(timeline.length/7*5)|0];
+                if(this.tooltip){
+                    this.tooltip.opacity = 0;
+                    this.tooltip.visible = false;
+                }
+            }
+
 
 
             console.log( 'Dots count:', columns[ 0 ].length );
@@ -403,7 +417,7 @@
             minMax1.updateDelta();
             minMax2.updateDelta();
             if(this.camera === null || camera){
-                var day = 1000*60*60*24;
+                var day = PCG.DAY;
                 var justCalc = !!camera;
                 camera = camera || {};
                 camera.minMax1 = minMax1;
@@ -611,12 +625,6 @@
 
             this.updateGraph();
         },
-        _removeTooltipCircles: function() {
-            var circle;
-            while( ( circle = this.els.highlightCircles.pop() ) ){
-                this.els.graph.removeChild( circle );
-            }
-        },
         lastHash: '',
         nextNavUpdate: 0,
         showTooltip: function( sliceID ){
@@ -631,59 +639,6 @@
                 };
             }
             this.update();
-            return;
-            var slice = this.data[ sliceID ],
-                time = slice[ 0 ],
-                visible = this._getVisible();
-
-            this.els.tooltip.style.display = 'block';
-            var i, _i, val, name;
-
-            // remove old circles
-            this._removeTooltipCircles();
-            D.removeChildren( this.els.tooltipInfo );
-
-            var xPos = this.getX( time )/PCG.DPR;
-            // add new circles
-            for( i = 0, _i = visible.length; i < _i; i++ ){
-                val = slice[ visible[ i ] + 1 ];
-                name = this.columns[ visible[ i ] ];
-                this.els.highlightCircles.push( D.circle( {
-                    attr: {
-                        stroke: this.getColor( name,1),
-                        cx: xPos,
-                        cy: this.getY1( val ),
-                        r: 6,
-                        'stroke-width': 3
-                    },
-                    renderTo: this.els.graph
-                } ) );
-
-                this.els.tooltipInfo.appendChild(
-                    D.div( {
-                            cls: 'pcg-tooltip__info-item',
-                            style: { color: this.getColor(name,1) }
-                        },
-                        D.div( { cls: 'pcg-tooltip__info-item__count' }, PCG.numberFormat(val) ),
-                        this.names[ name ]
-                    )
-                )
-            }
-            this.els.tooltipDate.innerText = this.formatters.weekDate( time );
-            var tooltipStyle = this.els.tooltip.style,
-                tooltipRect = this.els.tooltip.getClientRects()[0];
-
-            this.els.verticalMouseSlice.style.left = xPos-1+'px';
-            this.els.verticalMouseSlice.style.display = 'block';
-
-            var tooltipLeft = xPos - tooltipRect.width/3.5;
-            if(tooltipLeft<1){
-                tooltipLeft = 1;
-            }
-            if((tooltipLeft+tooltipRect.width+1)*PCG.DPR>this.world.graph.width){
-                tooltipLeft = this.world.graph.width/PCG.DPR - tooltipRect.width - 1;
-            }
-            tooltipStyle.left = tooltipLeft+'px';
         },
         tooltip: null,
         hideTooltip: function(){
@@ -739,6 +694,132 @@
                 }
             };
 
+        },
+        zoomIn: function(slice) {
+            var date = new Date(this.timeline[slice]);
+            if(this.zoomType === PCG.ZOOM.LOAD){
+                var fileName = PCG.path.join(
+                    [date.getFullYear(), PCG.pad(date.getMonth()+1)].join('-'),
+                    [PCG.pad(date.getDate()), 'json'].join('.')
+                );
+                this.createBackup();
+                this.loadData( fileName, true );
+            }else if(this.zoomType === PCG.ZOOM.CUSTOM){
+                this.createBackup();
+                this.customZoom(date);
+            }
+        },
+        joinAndLoadData: function(data, dates, names, colors) {
+
+            var rColors = {},
+                rNames = {},
+                rTypes = {x:'x'},
+                rColumns = [],
+
+            timeline = [];
+
+            var i = 0, baseDate;
+
+            var minute = PCG.MINUTE;
+            var timeLineHash = {};
+            data.forEach(function(el, n) {
+                if(el){
+                    var dates = el.columns.filter(function(row) {
+                        return row[0] === 'x';
+                    })[0].slice(1);
+                    var diff = 0;
+                    if(i === 0){
+                        baseDate = dates[n]
+                    }else{
+                        diff = baseDate - dates[n] // time ago
+                    }
+
+                    dates.forEach(function(time) {
+                        var val = Math.round((time+diff)/minute)*minute;
+                        timeLineHash[val] = true;
+                    });
+
+                    i++;
+                }
+            });
+
+            for(i in timeLineHash){
+                timeline.push( parseInt( i, 10 ) );
+            }
+            timeline.sort(function(a,b) {
+                return a-b;
+            });
+            rColumns.push(['x'].concat(timeline));
+            i=0;
+            data.forEach(function(el, n) {
+                if(el){
+
+                    var id = 'y'+i;
+                    rColors[id] = colors[n];
+                    rNames[id] = names[n];
+
+
+                    var newColumn = [id];
+                    for( var j = 0, _j = el.columns.length; j < _j; j++ ){
+                        var column = el.columns[ j ];
+                        if(column[0] !== 'x'){
+                            var notX = j;
+                        }else{
+                            var isX = j;
+                        }
+                    }
+
+                    var diff = baseDate === dates[n] ? 0 : baseDate - dates[n];
+                    var chartTimeline = el.columns[isX].slice(1),
+                        chartData = el.columns[notX].slice(1);
+                    rTypes[id] = el.types[el.columns[notX][0]];
+                    var cursor = 0,
+                        dL = chartData.length;
+
+                    for( var k = 0, _k = timeline.length; k < _k; k++ ){
+                        var timelineElement = timeline[ k ];
+                        var time = chartTimeline[cursor],
+                            rounded = Math.round((time+diff)/minute)*minute;
+
+                        if(rounded === timelineElement){
+                            newColumn.push(chartData[cursor]);
+                            cursor++;
+                        }else{
+                            var dD = chartData[cursor+1]-chartData[cursor],
+                                dT = chartTimeline[cursor+1]-chartTimeline[cursor];
+
+                            newColumn.push(chartData[cursor]);//-dD/dT*(timelineElement-time));
+                        }
+                    }
+                    rColumns.push(newColumn);
+                    i++;
+                }
+            });
+
+            var result = {
+                colors: rColors,
+                columns: rColumns,
+                types: rTypes,
+                names: rNames
+            };
+            debugger
+            this.load(result, true);
+
+        },
+        createBackup: function() {
+            this.backup = {
+                colors: this.colors,
+                rawData: this.rawData,
+                timeline: this.timeline,
+                names: this.names,
+                types: this.types,
+                percentage: this.percentage,
+                stacked: this.stacked,
+                y_scaled: this.y_scaled,
+                data: this.data,
+                columns: this.columns,
+                _visible: this._visible
+            }
         },
         scheme: {},
         setNightMode: function(val) {

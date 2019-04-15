@@ -9,3 +9,9 @@ var PCG = window['PCG'] = function(cfg) {
     this.resize = this.resize.bind(this);
     this.init();
 };
+
+PCG.ZOOM = {
+    INTERPOLATE: 1,
+    CUSTOM: 2,
+    LOAD: 3
+};

@@ -1,5 +1,5 @@
 
-// It is poor man's builder, do not look at it!
+// It is poor man's builder, please close this file and forget it!
 
 const fs = require('fs'),
     path = require('path');

@@ -1,7 +1,7 @@
 (function(PCG){
     var animation = PCG.animation,
         DPRc;
-
+    var D = PCG.D;
     function roundedRect(ctx, x, y, width, height, radius) {
         ctx.beginPath();
         ctx.moveTo(x, y + radius);
@@ -112,9 +112,9 @@
             tooltip.opacity = Math.max(0, tooltip.opacity-dt/animation.tooltipOpacity);
             if(tooltip.opacity === 0){
                 this.tooltip = null;
-                return;
+            }else{
+                needUpdate = true;
             }
-            needUpdate = true;
         }
 
         /*var slice = this.data[ tooltip.sliceID ],
@@ -123,6 +123,62 @@
 */
         if(needUpdate)
             this.update();
+
+
+        if(this.tooltip && tooltip.opacity>0){
+            var slice = this.data[ tooltip.slice ],
+                time = slice[ 0 ],
+                visible = this._getVisible();
+
+            this.els.tooltip.style.display = 'block';
+            var i, _i, val, name;
+
+            D.removeChildren( this.els.tooltipInfo );
+
+            var xPos = this.getX( time ) / PCG.DPR;
+            // add new circles
+            for( i = 0, _i = visible.length; i < _i; i++ ){
+                val = slice[ visible[ i ] + 1 ];
+                name = this.columns[ visible[ i ] ];
+
+                this.els.tooltipInfo.appendChild(
+                    D.div( {
+                            cls: 'pcg-tooltip__info-item',
+                            style: { color: this.getColor( name, 1 ) }
+                        },
+                        D.div( { cls: 'pcg-tooltip__info-item__count' }, PCG.numberFormat( val ) ),
+                        this.names[ name ]
+                    )
+                )
+            }
+            this.els.tooltipDate.innerText = this.formatters.weekDate( time );
+            var tooltipStyle = this.els.tooltip.style,
+                tooltipRect = this.els.tooltip.getClientRects()[ 0 ];
+
+
+
+            var tooltipLeft = xPos - tooltipRect.width / PCG.DPR;
+            if( tooltipLeft < 1 ){
+                tooltipLeft = 1;
+            }
+            if( ( tooltipLeft + tooltipRect.width + 1 ) * PCG.DPR > this.world.graph.width ){
+                tooltipLeft = this.world.graph.width / PCG.DPR - tooltipRect.width - 1;
+            }
+            tooltipStyle.left = tooltipLeft + 'px';
+
+            tooltip.rect = {
+                left: tooltipLeft*PCG.DPR,
+                top: 0,
+                height: tooltipRect.height*PCG.DPR,
+                width: tooltipRect.width*PCG.DPR
+            };
+
+            tooltipStyle.opacity = tooltip.opacity;
+        }else{
+            var tooltipStyle = this.els.tooltip.style;
+            tooltipStyle.display = 'none'
+        }
+
     };
 
     PCG.Canvas2d.prototype = {

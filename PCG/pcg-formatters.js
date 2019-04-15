@@ -21,9 +21,9 @@
     shortMonths[8] = 'Sept';
 
     var second = 1000,
-        minute = second * 60,
-        hour = minute * 60,
-        day = hour*24;
+        minute = PCG.MINUTE = second * 60,
+        hour = PCG.HOUR =  minute * 60,
+        day = PCG.DAY = hour*24;
     PCG.dateFormatter = function(date){
         if(!(date instanceof Date)){
             date = new Date(Math.round(date/day)*day);

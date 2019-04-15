@@ -42,6 +42,7 @@
         LEFT = 2,
         MIDIR = 3,
         RIGHT = 4,
+        TOOLTIP = 5,
         NONE = 0;
 
     var state = NONE;
@@ -61,11 +62,25 @@
         current = this;
         startPoint.borrow(point);
         var y = point.y;
+        var x = point.x;
         if(y<=this.constsDPR.graphicHeight+this.constsDPR.axeX/2){
-            state = GRAPHIC;
-            this.move(e);
+            var rect, gRect;
+            if(!this.zoomed && this.tooltip && (rect = this.tooltip.rect)){
+                gRect = this.world.graph;
+                if(x>=rect.left && x<=rect.left+rect.width && y>=rect.top && y<=rect.top+rect.height){
+                    state = TOOLTIP;
+                    this.zoomIn(this.tooltip.slice);
+                }else{
+                    state = GRAPHIC;
+                }
+            }else{
+                state = GRAPHIC;
+            }
+            if(state === GRAPHIC){
+                this.move(e);
+            }
         }else{
-            var x = point.x;
+
             var minDate = this.minDate;
             var momentumDelta = ( this.maxDate - minDate );
             var left = ((this.frame.from-minDate)/momentumDelta*this.world.nav.width)|0,
@@ -183,7 +198,7 @@
 
                 this.camera.offset = frame.from;//unLeft;
             }*/
-            var day = 1000*60*60*24;
+            var day = PCG.DAY;
             this.camera.AxisXGranule = day * Math.pow(2, Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)));
             this.camera.offset = frame.to;
             this.update();
@@ -200,7 +215,7 @@
     PCG.up = function(e) {
         toLocalPoint(e, this.world.graph);
         last = current;
-        lastNearest = null;
+        //lastNearest = null;
 
         state = null;
         b.style.overflow = 'auto';

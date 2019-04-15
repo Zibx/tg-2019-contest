@@ -25,6 +25,10 @@
             return (a + '/'+ b).replace(/\/+/g,'/');
         }
     };
+    PCG.pad = function(a) {
+        a+='';
+        return a.length===1?'0'+a:a;
+    };
     var tmpColor = [];
     PCG.color = function(arr, opacity) {
         tmpColor[0] = arr[0];

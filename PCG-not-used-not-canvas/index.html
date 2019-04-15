@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, minimal-ui, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Picograph</title>
+    <script src="PCG/base.js"></script>
+    <script src="PCG/pcg-util.js"></script>
+    <script src="PCG/pcg-canvas2d.js"></script>
+    <script src="PCG/pcg-ajax.js"></script>
+    <script src="PCG/pcg-dom-util.js"></script>
+    <script src="PCG/pcg-checkboxes.js"></script>
+    <script src="PCG/pcg-dom.js"></script>
+    <script src="PCG/pcg-navigation.js"></script>
+    <script src="PCG/pcg-formatters.js"></script>
+    <script src="PCG/pcg-graph.js"></script>
+    <script src="PCG/pcg-axis.js"></script>
+    <script src="PCG/picograph.js"></script>
+
+<!--<script src="build/build.js"></script>-->
+    <link href="PCG/styles.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <!--<div class="article__open">How to build a good chart plotting library</div>-->
+    <div class="article">
+        <div id="doc" class="markdown-body container-fluid comment-enabled comment-open" style="position: relative;"><h4 class="part"><a class="anchor hidden-xs" href="#JS-Telegram-2019-March-Contest" title="JS-Telegram-2019-March-Contest" ><span class="octicon octicon-link"></span></a><em>JS Telegram 2019 March Contest</em></h4><h1 class="part"><a class="anchor hidden-xs" href="#How-to-make-a-good-chart-plotting-library" title="How-to-make-a-good-chart-plotting-library" ><span class="octicon octicon-link"></span></a>How to make a good chart plotting library</h1><h2 class="part"><a class="anchor hidden-xs" href="#A-Make-a-list-of-features" title="A-Make-a-list-of-features" ><span class="octicon octicon-link"></span></a>A) Make a list of features</h2><p class="part">Write down the full list of features that you are going to implement and take a break to think about architecture. It is a good practice for building anything larger than <code>hello-world</code> app.</p><h3 class="part"><a class="anchor hidden-xs" href="#1-Split-layout-into-3-parts" title="1-Split-layout-into-3-parts" ><span class="octicon octicon-link"></span></a>1. Split layout into 3 parts:</h3><ul class="part">
+            <li>Main chart area</li>
+            <li>Navigation area</li>
+            <li>Data switches display</li>
+        </ul><h3 class="part"><a class="anchor hidden-xs" href="#2-Load-given-data-format" title="2-Load-given-data-format" ><span class="octicon octicon-link"></span></a>2. Load given data format</h3><h3 class="part"><a class="anchor hidden-xs" href="#3-Choose-visualization-technique" title="3-Choose-visualization-technique" ><span class="octicon octicon-link"></span></a>3. Choose visualization technique</h3><h3 class="part"><a class="anchor hidden-xs" href="#4-Plot-chart-in-the-navigation-area" title="4-Plot-chart-in-the-navigation-area" ><span class="octicon octicon-link"></span></a>4. Plot chart in the navigation area</h3><h3 class="part"><a class="anchor hidden-xs" href="#5-Plot-visible-part-of-big-chart" title="5-Plot-visible-part-of-big-chart" ><span class="octicon octicon-link"></span></a>5. Plot visible part of big chart</h3><h3 class="part"><a class="anchor hidden-xs" href="#6-User-interactions" title="6-User-interactions" ><span class="octicon octicon-link"></span></a>6. User interactions</h3><ul class="part">
+            <li>click on chart → show point tooltip</li>
+            <li>resize view area</li>
+            <li>move view area</li>
+        </ul><h3 class="part"><a class="anchor hidden-xs" href="#7-Animations" title="7-Animations" ><span class="octicon octicon-link"></span></a>7. Animations</h3><h2 class="part"><a class="anchor hidden-xs" href="#B-Draw-the-rest-of-the-owl" title="B-Draw-the-rest-of-the-owl" ><span class="octicon octicon-link"></span></a>B) Draw the rest of the owl</h2><p class="part highlight">At the first sight, it was a simple task, so I want to describe pitfalls that were solved.</p><h3 class="part highlight"><a class="anchor hidden-xs" href="#Canvas-SVG-or-webGL" title="Canvas-SVG-or-webGL" ><span class="octicon octicon-link"></span></a>Canvas, SVG or webGL</h3><p class="part">Rendering should be fast enough to draw a lot of chart segments.<br>
+            It would be nice if our chart would have smooth framerate. It is not really a <code>business feature</code> for this type of widget, because charts are usually used by analytics and their first priority is to load without crushing on really large data sets. But we can try to do our best and prevent widget from freeze UI up by using lazy batching techniques.</p><h4 class="part"><a class="anchor hidden-xs" href="#Canvas" title="Canvas" ><span class="octicon octicon-link"></span></a>Canvas</h4><h5 class="part"><a class="anchor hidden-xs" href="#Pros" title="Pros" ><span class="octicon octicon-link"></span></a>Pros</h5><ul class="part">
+            <li>Canvas has got everything for drawing polyline</li>
+        </ul><h5 class="part"><a class="anchor hidden-xs" href="#Cons" title="Cons" ><span class="octicon octicon-link"></span></a>Cons</h5><ul class="part">
+            <li>Updating everything on each frame</li>
+            <li>Complex animations logic — we have to do it by hand</li>
+            <li>if we want to squeeze everything from our cpu — we must go to the low level (getContextData) and make manual point by point line drawing, reinventing antialiasing and segment joint types.</li>
+        </ul><h4 class="part"><a class="anchor hidden-xs" href="#SVG" title="SVG" ><span class="octicon octicon-link"></span></a>SVG</h4><h5 class="part"><a class="anchor hidden-xs" href="#Pros1" title="Pros1" ><span class="octicon octicon-link"></span></a>Pros</h5><ul class="part">
+            <li>It was literally created for plotting segments</li>
+            <li>It is possible to update parts of graphics separately</li>
+        </ul><h5 class="part"><a class="anchor hidden-xs" href="#Cons1" title="Cons1" ><span class="octicon octicon-link"></span></a>Cons</h5><ul class="part">
+            <li>Functions for manipulating with <code>path</code> segments were removed from API and now the only way to update segment in line is full attribute update</li>
+        </ul><h4 class="part"><a class="anchor hidden-xs" href="#WebGL" title="WebGL" ><span class="octicon octicon-link"></span></a>WebGL</h4><h5 class="part"><a class="anchor hidden-xs" href="#Pros2" title="Pros2" ><span class="octicon octicon-link"></span></a>Pros</h5><ul class="part">
+            <li>It can be rotated in 3d for zero cost!</li>
+            <li>It can be covered with shaders, lightning and particle animations!</li>
+        </ul><h4 class="part"><a class="anchor hidden-xs" href="#Cons2" title="Cons2" ><span class="octicon octicon-link"></span></a>Cons</h4><ul class="part">
+            <li>Creating mesh on CPU is too boring for getting fun from contest</li>
+            <li>Creating mesh in shader is funnier but it would take too much debug time, especially for making rounded joints.</li>
+        </ul><p class="part">SVG was my choice.</p><h3 class="part"><a class="anchor hidden-xs" href="#Test-data" title="Test-data" ><span class="octicon octicon-link"></span></a>Test data</h3><p class="part">Beeing an engineer who always think “How would it scale if there would be much more data?” I made my own dataset that contains 7 rows of data with one million points in each.</p><p class="part">This approach leads me to optimization techniques that have <code>log(N)</code> complexity. Never use dummy element by element lookups — use <code>binary search</code> or make some <code>hashs</code>.</p><h5 class="part"><a class="anchor hidden-xs" href="#Data-Format" title="Data-Format" ><span class="octicon octicon-link"></span></a>Data Format</h5><p class="part">Contest data format was too strange. There is no logical reason for passing chart data in this structure, except minor raising contest complexity.<br>
+            It would be better to use such data mapping:</p><pre class="part"><code class="json5 hljs">{
+  time: [timestamp1, ..., timestampN],
+  rows: {
+    <span class="hljs-string">"#1"</span>: {
+        title: <span class="hljs-string">"Joined"</span>,
+        color: <span class="hljs-string">"#BEEF11"</span>
+        val: [value1, ..., valueN]
+      }
+    <span class="hljs-string">"id"</span>: ...
+  }
+}
+</code></pre><h3 class="part"><a class="anchor hidden-xs" href="#Plot-chart-in-navigation" title="Plot-chart-in-navigation" ><span class="octicon octicon-link"></span></a>Plot chart in navigation.</h3><p class="part">Do not forget about 7 million points that exists in our crafted dataset.</p><h5 class="part"><a class="anchor hidden-xs" href="#Draw-once" title="Draw-once" ><span class="octicon octicon-link"></span></a>Draw once</h5><p class="part">Navigation does not scroll, it only scales vertically. It would be nice to make this small chart previews only in data loading step and in screen resize.</p><h5 class="part"><a class="anchor hidden-xs" href="#Do-not-draw-things-that-people-would-not-see" title="Do-not-draw-things-that-people-would-not-see" ><span class="octicon octicon-link"></span></a>Do not draw things that people would not see</h5><p class="part">When you have a really huge amount of data — you can reduce it at least to the count of pixels on the screen.</p><h5 class="part"><a class="anchor hidden-xs" href="#Batch-lazy-drawing-to-prevent-UI-freezing" title="Batch-lazy-drawing-to-prevent-UI-freezing" ><span class="octicon octicon-link"></span></a>Batch lazy drawing to prevent UI freezing</h5><p class="part">Use delays to process data in reasonable sized batches.</p><h3 class="part"><a class="anchor hidden-xs" href="#Plot-big-chart" title="Plot-big-chart" ><span class="octicon octicon-link"></span></a>Plot big chart</h3><p class="part">Do not draw the full chart, you should only render parts that are currently visible to user:</p><ul class="part">
+            <li>Track left\right bound of viewport and retrieve only corresponding data. <code>Binary search</code> is an optimal strategy for searching data slice <code>startIndex</code> and <code>endIndex</code>.</li>
+            <li>Iterate from <code>startIndex</code> to <code>endIndex</code> and do not draw more than one segment per <code>CHART_LINE_WIDTH</code>. You can even skip some points.</li>
+            <li>In my case I’ve choose to calculate the most odd dots in every visible segment, but it was not necessery.</li>
+        </ul><h3 class="part"><a class="anchor hidden-xs" href="#Navigation-window" title="Navigation-window" ><span class="octicon octicon-link"></span></a>Navigation window</h3><ul class="part">
+            <li>Move and resize data window on user interactions</li>
+            <li>Respect touch events</li>
+        </ul><h3 class="part"><a class="anchor hidden-xs" href="#Axis-Y" title="Axis-Y" ><span class="octicon octicon-link"></span></a>Axis Y</h3><ul class="part">
+            <li>Find out beautiful labels in currently visible chart bounds from min to max.</li>
+            <li>Update labels on chart updates</li>
+            <li>Keep in mind future animations</li>
+            <li>Renderer for long numbers</li>
+        </ul><h3 class="part"><a class="anchor hidden-xs" href="#Axis-X" title="Axis-X" ><span class="octicon octicon-link"></span></a>Axis X</h3><ul class="part">
+            <li>Labels should be in correct places</li>
+            <li>Values should keep their position if view frame is moved</li>
+        </ul><h3 class="part"><a class="anchor hidden-xs" href="#Animations" title="Animations" ><span class="octicon octicon-link"></span></a>Animations</h3><p class="part">It was the hardest part of the task for me</p><h4 class="part"><a class="anchor hidden-xs" href="#X-Axis-move-animation" title="X-Axis-move-animation" ><span class="octicon octicon-link"></span></a>X Axis move animation</h4><p class="part">X Axis values should stay on their places while time frame is moved. It can be easily achieved by calculating diff between <code>left_chart_bound</code> mod <code>full_single_axis_label_interval</code> and <code>dataset_start</code> mod <code>full_single_axis_label_interval</code>.</p><h4 class="part"><a class="anchor hidden-xs" href="#X-Axis-on-window-resize-animation" title="X-Axis-on-window-resize-animation" ><span class="octicon octicon-link"></span></a>X Axis on window resize animation</h4><p class="part">I kept the formula of calculating label positions, and just slightly hinted <code>dataset_start</code>. It become a dynamic property that I nail to left or right chart bound on navigation window resizing.</p><h4 class="part"><a class="anchor hidden-xs" href="#Y-Axis" title="Y-Axis" ><span class="octicon octicon-link"></span></a>Y Axis</h4><p class="part">Just make hash of currently displayed values and start <code>remove</code> animation when there is no such value in current axis labels. Value position keeps updating while animation is not finished.</p><h4 class="part"><a class="anchor hidden-xs" href="#Chart-vertical-scaling" title="Chart-vertical-scaling" ><span class="octicon octicon-link"></span></a>Chart vertical scaling</h4><p class="part">It is the easiest animation, so you just have to:</p><ol class="part">
+            <li>Calculate min\max of currently displayed dots</li>
+            <li>Get the median from new <code>min\max</code> to <code>previous_frame_min\max</code></li>
+            <li>Move the median closer to previous value to slow down the animation. I used 1/6 of new value mixing up</li>
+            <li>Redraw chart until |<code>new min\max</code> – <code>old min\max</code>| &gt; <code>epsilon</code></li>
+        </ol><h4 class="part"><a class="anchor hidden-xs" href="#Disappear-and-scale-chart-in-navigation" title="Disappear-and-scale-chart-in-navigation" ><span class="octicon octicon-link"></span></a>Disappear and scale chart in navigation</h4><h1 class="part"><a class="anchor hidden-xs" href="#TLDR" title="TLDR" ><span class="octicon octicon-link"></span></a>TLDR.</h1><p class="part">It was a really good contest with a bunch of pitfalls. Writing code and making choices process was similar to tasks that you can get in normal IT companies, so now I thing that TG is searching for developers and it was just a test task.</p><p class="part">I would place all code in my public github account at the 1 of April @Zibx.</p><p class="part"><strong>List of abbreviations</strong></p><ul class="part">
+            <li><em>chart, graphic</em> — colored segmented line</li>
+            <li><em>switch</em> — checkbox (input control with two states)</li>
+            <li><em>dot</em> — minimal amount of data. Contains only <code>x</code> and <code>y</code> (<code>time</code> and <code>value</code> in our case)</li>
+            <li><em>row</em> — all dots of the same group ordered by date</li>
+            <li><em>granule</em> — slice of single row (an array of dots in some time period)</li>
+        </ul></div>
+
+        <div class="article__show">Show me the complex case, please</div>
+        <div class="draw_complex_here"></div>
+
+    </div>
+    <div class="graph-holder">
+        <div class="title">Picograph 1</div>
+        <!-- It is a feature - you can spread different parts of graphic all over the page -->
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+
+
+    <div class="graph-holder">
+        <div class="title">Picograph 2</div>
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+
+    <div class="graph-holder">
+        <div class="title">Picograph 3</div>
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+
+    <div class="graph-holder">
+        <div class="title">Picograph 4</div>
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+
+    <div class="graph-holder">
+        <div class="title">Picograph 5</div>
+        <div class="graph"></div>
+        <div class="graph-nav"></div>
+        <div class="graph-switches"></div>
+        <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
+    </div>
+
+    <div class="credit"><a href="https://github.com/Zibx">Zibx</a>, March 2019</div>
+
+
+    <!-- load hardcoded test data -->
+    <!--<script src="data.js"></script>-->
+
+    <script>
+        /*
+        PG - picograph. Init it with a config object
+            frame - {from: timestamp, to: timestamp} || {to: null, from: -deltaTime}
+            renderTo - specify all 3 elements to render parts of picograph:
+                graph div,
+                navigation div
+                switches div
+
+        You can restyle everything with css
+         */
+        var graphs = document.querySelectorAll('.graph'),
+            navs = document.querySelectorAll('.graph-nav'),
+            switches = document.querySelectorAll('.graph-switches'),
+            titles = document.querySelectorAll('.title');
+        for(var i = 0; i < 5; i++){
+            (function(i) {
+                var graph = new PCG( {
+                    dataSource: 'contest/'+(i+1),
+                    renderTo: {
+                        graph: graphs[i],
+                        nav: navs[i],
+                        switches: switches[i],
+                    },
+                    frame: {
+                        from: -1000 * 60 * 60 * 24 * 30, // month ago
+                        to: null
+                    }
+                } );
+
+
+                window.addEventListener( 'resize', graph.resize );
+            })(i);
+
+
+        }
+
+
+        [].slice.call(document.querySelectorAll('.graph-mode-switch')).forEach(function(el) {
+            el.addEventListener('click', function(e) {
+                this.parentNode.classList.toggle('night');
+                var span = this.querySelector('span');
+                span.innerText = span.innerText === 'Night'?'Day':'Night';
+                e.preventDefault();
+            });
+        });
+        document.querySelector('.article__open').addEventListener('click', function(e) {
+            document.querySelector('.article').classList.toggle('visible');
+            e.preventDefault();
+        });
+        var shown = false;
+        document.querySelector('.article__show').addEventListener('click', function(e) {
+            e.preventDefault();
+            if(shown){
+                return;
+            }
+            shown = true;
+            var D = PCG.D;
+            var g, n, s;
+
+            D.div({cls: 'graph-holder', renderTo: document.querySelector('.draw_complex_here')},
+                D.div({cls: 'title'}, 'More complex case'),
+                g = D.div({cls: 'graph'}),
+                n = D.div({cls: 'graph-nav'}),
+                s = D.div({cls: 'graph-switches'})
+            );
+            var graph = new PCG( {
+                renderTo: {
+                    graph: g,
+                    nav: n,
+                    switches: s,
+                },
+                frame: {
+                    from: -1000 * 60 * 60 * 24 * 30, // month ago
+                    to: null
+                }
+            } );
+
+            graph.load( data[ 5 ] );
+            window.addEventListener( 'resize', graph.resize );
+
+
+        });
+    </script>
+</body>
+</html>
