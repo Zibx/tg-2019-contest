@@ -11,6 +11,7 @@
         }
         var list = [];
         var columns = this.columns;
+        var inputs = [];
         columns.forEach( function( name, i ){
             var dataRow = { name: name, show: true, i: i, opacity: 1 };
             list.push( dataRow );
@@ -21,7 +22,66 @@
                 style: {color: '#fff'}
 
             }, _self.names[ name ]);
+
+            var downTime, downTimeout ;
+            var long = function() {
+                for( var j = 0, _j = inputs.length; j < _j; j++ ){
+                    var input = inputs[ j ];
+                    input.el.checked = j === i;
+                    input.handle(input.el, true);
+                }
+            };
+            var down = function() {
+                downTime = new Date()
+                clearTimeout(downTimeout);
+                downTimeout = setTimeout(long, 700);
+            };
+            var up = function() {
+                clearTimeout(downTimeout);
+            },
+            change = function(target, force) {
+                if(force){
+                    _self.updateVisible();
+                    list[ i ].show = target.checked;
+                }else{
+                    if( target.checked === false && _self._all.filter( isVisible ).length === 1 ){
+                        // PREVENT
+                        target.checked = true;
+                        setTimeout( function(){
+                            target.checked = true
+                        }, 0 );
+                        target.classList.add( 'error-checkbox' );
+                        setTimeout( function(){
+                            target.classList.remove( 'error-checkbox' );
+                        }, animation.lastCheckboxShake );
+                    }else{
+                        list[ i ].show = target.checked;
+                        _self.updateVisible();
+                    }
+                }
+                label.style.background = target.checked?_self.getColor(name, 1):'transparent';
+                nameLabel.style.color = !target.checked?_self.getColor(name, 1):'#ffffff';
+            };
+            var input = D.input( {
+                cls: 'pcg-checkbox__input',
+                attr: { type: 'checkbox', checked: true },
+                on: {
+                    change: function( e ){
+                        change(e.target)
+                        //debugger
+                        e.preventDefault();
+                    }
+                }
+            } );
+            inputs.push({el: input, handle: change});
             var label = D.label( {
+                    on: {
+                        touchstart: down,
+                        touchend: up,
+                        touchcancel: up,
+                        mousedown: down,
+                        mouseup: up
+                    },
                     cls: 'pcg-checkbox-wrapper',
                     renderTo: switchesEl,
                     style: {
@@ -30,32 +90,7 @@
                     }
                 },
                 // children
-                D.input( {
-                    cls: 'pcg-checkbox__input',
-                    attr: { type: 'checkbox', checked: true },
-                    on: {
-                        change: function( e ){
-                            if(e.target.checked === false && _self._all.filter(isVisible).length === 1){
-                                // PREVENT
-                                e.target.checked = true;
-                                setTimeout(function() {
-                                    e.target.checked = true
-                                },0);
-                                e.target.classList.add('error-checkbox');
-                                setTimeout(function() {
-                                    e.target.classList.remove('error-checkbox');
-                                }, animation.lastCheckboxShake);
-                            }else{
-                                list[ i ].show = e.target.checked;
-                                _self.updateVisible();
-                            }
-                            label.style.background = e.target.checked?_self.getColor(name, 1):'transparent';
-                            nameLabel.style.color = !e.target.checked?_self.getColor(name, 1):'#ffffff';
-                            //debugger
-                            e.preventDefault();
-                        }
-                    }
-                } ),
+                input,
                 D.div( { cls: 'pcg-checkbox__img-wrapper' },
                     D.svg( {
                             cls: 'pcg-checkbox__img',
