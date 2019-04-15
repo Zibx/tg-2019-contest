@@ -34,6 +34,14 @@
             return date.getHours() + ':' + PCG.pad(date.getMinutes());
         }
     };
+    PCG.JdateFormatter = function(date, minDelta){
+        if(!(date instanceof Date)){
+            date = new Date(Math.round(date/minDelta)*minDelta);
+        }
+
+        return date.getDate()+' '+shortMonths[ date.getMonth() ]+' '+date.getFullYear();
+
+    };
     PCG.weekDateFormatter = function(date){
         if(!(date instanceof Date)){
             date = new Date(Math.round(date/day)*day);

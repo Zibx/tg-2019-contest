@@ -94,6 +94,33 @@
         _all: null,
         skipNextFrame: false,
         updatePreview: true,
+        updateDates: function() {
+            var statEl = this.renderTo.stat;
+
+            var from = this.frame.from,
+                to = this.frame.to;
+
+            var text;
+            if(to-from<PCG.DAY*2){
+                text = PCG.weekDateFormatter((to+from)/2)
+            }else{
+                text = PCG.JdateFormatter(from, PCG.DAY)+' &mdash; '+PCG.JdateFormatter(to, PCG.DAY);
+            }
+
+            if(this.lastText !== text){
+                this.lastText = text;
+                statEl.innerHTML = text.split(' ').map(function(t) {
+                    return '<span class="graph-stat-block">'+t+'</span>';
+                }).join(' ')
+            }
+
+
+        /*<span class="graph-stat-block">Saturday</span>,
+                <span class="graph-stat-block">20</span>
+                <span class="graph-stat-block">April</span>
+                <span class="graph-stat-block">2019</span>*/
+
+        },
         init: function(){
             this.day = true;
             this.clear();
@@ -247,6 +274,7 @@
                 _self.onZoom && _self.onZoom(_self.zoomed);
                 _self.updateXGranule(_self.camera, _self.frame);
                 _self.update();
+                _self.updateDates();
             }, 100);
         },
         warTime: false,
@@ -763,6 +791,7 @@
             _self.updateXGranule(_self.camera, _self.frame);
             this.els.XAxisHash = {};
             this.onZoom && this.onZoom(this.zoomed);
+            _self.updateDates();
             _self._update();
             _self.updateXGranule(_self.camera, _self.frame);
 

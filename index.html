@@ -57,10 +57,6 @@
                 </button>
             </div>
             <div class="graph-stat">
-                <span class="graph-stat-block">Saturday</span>,
-                <span class="graph-stat-block">20</span>
-                <span class="graph-stat-block">April</span>
-                <span class="graph-stat-block">2019</span>
             </div>
         </div>
         <!-- It is a feature - you can spread different parts of graphic all over the page -->
@@ -90,10 +86,6 @@
                 </button>
             </div>
             <div class="graph-stat">
-                <span class="graph-stat-block">Saturday</span>,
-                <span class="graph-stat-block">20</span>
-                <span class="graph-stat-block">April</span>
-                <span class="graph-stat-block">2019</span>
             </div>
         </div>
         <div class="graph"></div>
@@ -121,10 +113,6 @@
                 </button>
             </div>
             <div class="graph-stat">
-                <span class="graph-stat-block">Saturday</span>,
-                <span class="graph-stat-block">20</span>
-                <span class="graph-stat-block">April</span>
-                <span class="graph-stat-block">2019</span>
             </div>
         </div>
         <div class="graph"></div>
@@ -152,10 +140,6 @@
                 </button>
             </div>
             <div class="graph-stat">
-                <span class="graph-stat-block">Saturday</span>,
-                <span class="graph-stat-block">20</span>
-                <span class="graph-stat-block">April</span>
-                <span class="graph-stat-block">2019</span>
             </div>
         </div>
         <div class="graph"></div>
@@ -183,10 +167,6 @@
                 </button>
             </div>
             <div class="graph-stat">
-                <span class="graph-stat-block">Saturday</span>,
-                <span class="graph-stat-block">20</span>
-                <span class="graph-stat-block">April</span>
-                <span class="graph-stat-block">2019</span>
             </div>
         </div>
         <div class="graph"></div>
@@ -214,8 +194,8 @@
         var graphs = document.querySelectorAll('.graph'),
             switches = document.querySelectorAll('.graph-switches'),
             unzoom = document.querySelectorAll('.zoom-el'),
-            headers = document.querySelectorAll('.title-row');
-
+            headers = document.querySelectorAll('.title-row'),
+            stat = document.querySelectorAll('.graph-stat');
 
 
 
@@ -269,7 +249,8 @@
                         graph: graphs[i],
                         switches: switches[i],
                         unZoom: unzoom[i],
-                        header: headers[i]
+                        header: headers[i],
+                        stat: stat[i]
 
                     },
                     frame: {

@@ -172,7 +172,9 @@
                 frame.from = frame.to - frameWidth;
             }
 
+            this.updateXGranule(this.camera, this.frame);
             this.update();
+            this.updateDates();
         }else if(state === LEFT || state === RIGHT){
             var frame = context.frame,
                 moved = context.timeDelta/context.width*(point.x-startPoint.x);
@@ -239,6 +241,7 @@
             this.updateXGranule(this.camera, this.frame);
 
             this.update();
+            this.updateDates();
         }
 
         if(last !== this && last){

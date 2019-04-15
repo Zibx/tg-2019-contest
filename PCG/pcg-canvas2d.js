@@ -152,6 +152,18 @@
                     )
                 )
             }
+            if(this.stacked && !this.percentage){
+                this.els.tooltipInfo.appendChild(
+                    D.div( {
+                            cls: 'pcg-tooltip__info-item',
+                            style: { color: PCG.color(this.scheme.yLabel) }
+                        },
+                        D.div( { cls: 'pcg-tooltip__info-item__count' }, PCG.numberFormat( val ) ),
+                        D.div( {cls: 'pcg-tooltip__info-item__label'}, 'All')
+                    )
+                )
+
+            }
             this.els.tooltipDate.innerText = this.formatters.weekDate( time );
             var tooltipStyle = this.els.tooltip.style,
                 tooltipRect = this.els.tooltip.getClientRects()[ 0 ];

@@ -67,7 +67,7 @@
         canvas: null,
         Text: function( val ){ return document.createTextNode( val );}
     };
-    'div,input,label,canvas'.split( ',' ).forEach( function( name ){
+    'div,input,label,canvas,span'.split( ',' ).forEach( function( name ){
         D[ name ] = function(){
             return domEl.apply( null, [ name ].concat([].slice.call(arguments)))
         };
