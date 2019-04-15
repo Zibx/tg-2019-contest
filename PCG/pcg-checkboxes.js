@@ -8,7 +8,7 @@
         while( switchesEl.childNodes.length ){
             switchesEl.removeChild( switchesEl.lastChild );
         }
-        let list = [];
+        var list = [];
         var columns = this.columns;
         columns.forEach( function( name, i ){
             var dataRow = { name: name, show: true, i: i, opacity: 1 };
@@ -24,7 +24,7 @@
                     cls: 'pcg-checkbox__input',
                     attr: { type: 'checkbox', checked: true },
                     on: {
-                        change: ( e ) => {
+                        change: function( e ){
                             if(e.target.checked === false && _self._all.filter(isVisible).length === 1){
                                 // PREVENT
                                 e.target.checked = true;

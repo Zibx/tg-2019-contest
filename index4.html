@@ -34,12 +34,12 @@
     <link href="PCG/styles.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<h1>level 2</h1>
+<!--<h1>level 2</h1>-->
+<!--<script>window.location.reload(true)</script>-->
     <div class="graph-holder">
         <div class="title">Followers</div>
         <!-- It is a feature - you can spread different parts of graphic all over the page -->
         <div class="graph"></div>
-        <div class="graph-nav"></div>
         <div class="graph-switches"></div>
         <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
     </div>
@@ -48,7 +48,6 @@
     <div class="graph-holder">
         <div class="title">Interactions</div>
         <div class="graph"></div>
-        <div class="graph-nav"></div>
         <div class="graph-switches"></div>
         <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
     </div>
@@ -56,7 +55,6 @@
     <div class="graph-holder">
         <div class="title">Fruits Exterminated (bln)</div>
         <div class="graph"></div>
-        <div class="graph-nav"></div>
         <div class="graph-switches"></div>
         <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
     </div>
@@ -64,7 +62,6 @@
     <div class="graph-holder">
         <div class="title">Views</div>
         <div class="graph"></div>
-        <div class="graph-nav"></div>
         <div class="graph-switches"></div>
         <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
     </div>
@@ -72,7 +69,6 @@
     <div class="graph-holder">
         <div class="title">No More Pears</div>
         <div class="graph"></div>
-        <div class="graph-nav"></div>
         <div class="graph-switches"></div>
         <div class="graph-mode-switch">Switch to <span>Night</span> Mode</div>
     </div>
@@ -95,7 +91,6 @@
         You can restyle everything with css
          */
         var graphs = document.querySelectorAll('.graph'),
-            navs = document.querySelectorAll('.graph-nav'),
             switches = document.querySelectorAll('.graph-switches'),
             titles = document.querySelectorAll('.title');
 
@@ -106,7 +101,6 @@
                     dataSource: 'contest/'+(i+1),
                     renderTo: {
                         graph: graphs[i],
-                        nav: navs[i],
                         switches: switches[i],
                     },
                     frame: {

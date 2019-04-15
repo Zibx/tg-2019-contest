@@ -1,6 +1,6 @@
 (function(PCG){
-    const D = PCG.D;
-    const XlabelSize = 45;
+    var D = PCG.D;
+    var XlabelSize = 45;
     PCG.updateYAxis = function updateYAxis(minMax, dt){
         /*var axeData = this.yAxis;
 
@@ -31,7 +31,7 @@ return
             getY = this.getY1;
 
 
-        let item, line, label;
+        var item, line, label;
 
 
 
@@ -47,7 +47,7 @@ return
         }
 
         var out = [roundedFrom];
-        let i, val;
+        var i, val;
 
         for(i = 1; i < count; i++){
             out.push(Math.round((roundedFrom+ rounded*i)/scale)*scale)
@@ -100,7 +100,7 @@ return
                 needUpdate = true;
                 label = item.label;
 
-                let pos = this.getY1(item.val);
+                var pos = this.getY1(item.val);
                 item.visible = false;
                 item.top = pos;
                 item.opacity = Math.max(0,item.opacity - dt*1000/this.animation.labelHide);
@@ -148,10 +148,10 @@ return
 
         //from -= granule;
 
-        let i, val, left, date, item, _i;
+        var i, val, left, date, item, _i;
         const hash = this.els.XAxisHash,
             usedHash = {};
-        let width = this.world.graph.width;
+        var width = this.world.graph.width;
         const step = this.camera.AxisXGranule;
         for(i = from; i < to+step; i+=step){
             val = (this.camera.offset % this.camera.AxisXGranule) - (this.frame.from % this.camera.AxisXGranule)+i;
@@ -189,7 +189,7 @@ return
             item = hash[val];
             if(!(val in usedHash)){
                 needUpdate = true;
-                let left = this.getX(item.val);
+                var left = this.getX(item.val);
                 item.visible = false;
                 item.left = left;
                 item.opacity = Math.max(0,item.opacity - dt*1000/this.animation.labelHide);

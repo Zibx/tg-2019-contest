@@ -1,4 +1,9 @@
 (function(PCG){
+    if(!('requestAnimationFrame' in window)){
+        window.requestAnimationFrame = function(fn) {
+            setTimeout(fn,0)
+        };
+    }
     PCG.lerp = function(from, to, percent,n) {
         if(isNaN(from+(to-from)*Math.pow(percent,1/n)))
             debugger
@@ -6,6 +11,12 @@
             return from+(to-from)*Math.pow(percent,1/n);
         else
             return from+(to-from)*percent;
+    };
+    PCG.apply = function(a,b) {
+        for(var k in b){
+            a[k] = b[k];
+        }
+        return a;
     };
     PCG.path = {
         join: function(a,b) {

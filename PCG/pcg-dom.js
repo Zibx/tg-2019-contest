@@ -1,25 +1,12 @@
 (function(PCG){
-    const D = PCG.D;
+    var D = PCG.D;
+    var doc = document,
+        b;
     PCG.initDOM = function initDOM() {
-        const around = this.renderTo;
+        b = doc.body;
+        var around = this.renderTo;
 
         this.els = {
-            navWindow: D.div({cls: 'navWindow', renderTo: around.nav}),
-            nav: D.svg({renderTo: around.nav}),
-            navEars: [
-                D.div({
-                    renderTo: around.nav,
-                    cls: 'navEar navEar-left',
-                    style: {left: 0}
-                }),
-                D.div({
-                    renderTo: around.nav,
-                    cls: 'navEar navEar-right',
-                    style: {right: 0}
-                })
-            ],
-            navExpandControl: D.div({cls: 'pcg pcg-nav__expand-control', renderTo: around.nav}),
-            navMoveControl: D.div({cls: 'pcg pcg-nav__move-control', renderTo: around.nav}),
 
             graph: D.canvas({renderTo: around.graph}),
             yAxisStorage: D.div({cls: 'pcg-yAxisStorage', renderTo: around.graph}),
@@ -44,25 +31,141 @@
         this.XAxisLabelCount = 0;
         this.els.tooltip.appendChild(this.els.tooltipDate);
         this.els.tooltip.appendChild(this.els.tooltipInfo);
-
+        this.els.graph.PCG = this;
         this.collectWorldInfo();
     };
-    PCG.initListeners = function initListeners() {
-        const resizeOffset = this.consts.resizeOffset;
-        let start;
-        let world;
-        let frame;
-        let frameWidth,
-            startFrame,
-            pxToTime;
 
-        let toLeft = true;
 
-        const resizeMove = (e)=>{
-            //console.log('move', e.type);
-            let point = e.clientX;
-            let moved = pxToTime(point-start);
-            if(toLeft){
+    var current = null;
+    var point = new PCG.Point();
+    var startPoint = new PCG.Point(0,0);
+    var lastPoint = new PCG.Point(0,0);
+
+    var GRAPHIC = 1,
+        LEFT = 2,
+        MIDIR = 3,
+        RIGHT = 4,
+        NONE = 0;
+
+    var state = NONE;
+
+    var toLocalPoint = function(e, graph) {
+        point.x = e.pageX*PCG.DPR-graph.left;
+        point.y = e.pageY*PCG.DPR-graph.top;
+    };
+    var last = null;
+    var context = {};
+
+    PCG.down = function(e) {
+        if(last && last !== this){
+            last.hideTooltip();
+        }
+        toLocalPoint(e, this.world.graph);
+        current = this;
+        startPoint.borrow(point);
+        var y = point.y;
+        if(y<=this.constsDPR.graphicHeight+this.constsDPR.axeX/2){
+            state = GRAPHIC;
+            this.move(e);
+        }else{
+            var x = point.x;
+            var minDate = this.minDate;
+            var momentumDelta = ( this.maxDate - minDate );
+            var left = ((this.frame.from-minDate)/momentumDelta*this.world.nav.width)|0,
+                width = ((this.frame.to-this.frame.from)/momentumDelta*this.world.nav.width)|0;
+
+            var handleWidth = this.constsDPR.navWindowDraggerWidth;
+            var leftHandleRight = left+this.constsDPR.paddingLeft+handleWidth*1.5;
+
+            if(x<leftHandleRight){
+                if(x>leftHandleRight-handleWidth*2.5){
+                    state = LEFT;
+                }else{
+                    state = NONE;
+                }
+            }else{
+                var maxDate = this.maxDate;
+                var right = ((maxDate-this.frame.to)/momentumDelta*this.world.nav.width)|0
+                var rightHandleLeft = this.world.graph.width-this.constsDPR.paddingRight-right-handleWidth*1.5;
+                if(x>rightHandleLeft){
+                    if(x< rightHandleLeft+handleWidth*2.5){
+                        state = RIGHT;
+                    }else{
+                        state = NONE;
+                    }
+                }else{
+                    state = MIDIR;
+                }
+            }
+            if(state !== NONE){
+                b.style.overflow = 'hidden';
+            }
+        }
+        if(state !== GRAPHIC && state !== NONE){
+            var frame = context.frame = this.frame;
+            context.startFrame = frame.from;
+            context.frameWidth = frame.to - frame.from;
+            context.width = this.world.graph.width - this.constsDPR.paddingLeft - this.constsDPR.paddingRight;
+            context.timeDelta = this.maxDate - this.minDate;
+
+        }
+
+        if(state !== GRAPHIC){
+            this.hideTooltip();
+        }
+    };
+    var lastNearest;
+    PCG.move = function(e) {
+        toLocalPoint(e, this.world.graph);
+
+        if(state === GRAPHIC){
+            var x = point.x;
+            var time = this.xToTime(x),
+                sliceID = this._binarySearch(time),
+                getX = this.getX,
+                data = this.data;
+
+            var i, sliceXPos, min = Infinity, dx, nearest;
+
+            for(i = -1; i < 2; i++){
+                sliceXPos = getX(data[sliceID+i][0]);
+                dx = Math.abs(sliceXPos-x);
+                if(dx<min){
+                    nearest = sliceID+i;
+                    min = dx;
+                }
+            }
+            if(lastNearest !== nearest){
+                this.showTooltip(nearest);
+                lastNearest = nearest;
+            }
+        }else if(state === MIDIR){
+            var x = point.x,
+                frame = context.frame,
+                startFrame = context.startFrame,
+                frameWidth = context.frameWidth;
+
+            frame.from = startFrame +
+                ( x - startPoint.x ) / this.world.nav.width * ( this.maxDate - this.minDate );
+            if( frame.from <= this.minDate ){
+                frame.from = this.minDate;
+            }
+            frame.to = frame.from + frameWidth;
+            if( frame.to >= this.maxDate ){
+                frame.to = this.maxDate;
+                frame.from = frame.to - frameWidth;
+            }
+
+            this.update();
+        }else if(state === LEFT || state === RIGHT){
+            var frame = context.frame,
+                moved = context.timeDelta/context.width*(point.x-startPoint.x);
+            if(state === LEFT){
+                frame.from = context.startFrame + moved;
+            }else{
+                frame.to = context.startFrame + context.frameWidth + moved;
+            }
+            /*if(toLeft){
                 frame.from = startFrame+moved;
                 if(frame.from>frame.to-pxToTime(resizeOffset*1.3)){
                     frame.from = frame.to - pxToTime( resizeOffset*1.3 );
@@ -82,181 +185,77 @@
                 }
 
                 this.camera.offset = frame.from;//unLeft;
-            }
-            this.camera.action = 'resize';
-            this.camera.toLeft = toLeft;
-
-
-            let day = 1000*60*60*24;
-
-
+            }*/
+            var day = 1000*60*60*24;
             this.camera.AxisXGranule = day * Math.pow(2, Math.round(Math.log(Math.ceil((this.frame.to-this.frame.from)/6/day))/Math.log(2)));
+            this.camera.offset = frame.to;
             this.update();
-        };
-        const touchResizeMove = (e)=>{
-            if(e.touches && e.touches.length){
-                resizeMove( e.touches[ 0 ] );
-                //e.stopPropagation();
-            }
-        };
-        const resizeUp = (e)=>{
-            console.log('up', e && e.type);
-            window.removeEventListener('mouseup', resizeUp);
-            document.removeEventListener('mousemove', resizeMove);
+        }
 
-            this.els.navExpandControl.removeEventListener('touchend', resizeUp);
-            this.els.navExpandControl.removeEventListener('touchcancel', resizeUp);
-            this.els.navExpandControl.removeEventListener('touchmove', touchResizeMove);
-            e && e.cancelable && e.preventDefault();
-            document.body.style.overflow = 'auto';
-        };
+        if(last !== this && last){
+            last.hideTooltip();
+        }
+        lastPoint.borrow(point);
+    };
+    PCG.longTap = function(e) {
 
-        const resizeDown = (e)=>{
-            this.hideTooltip();
-            console.log('down', e.type);
-            start = e.clientX;
-            world = this.world;
-            frame = this.frame;
-            frameWidth = frame.to - frame.from;
-            startFrame = frame.from;
+    };
+    PCG.up = function(e) {
+        toLocalPoint(e, this.world.graph);
+        last = current;
+        lastNearest = null;
 
-            toLeft = true;
-            const rect = e.target.getBoundingClientRect();
-            const offsetX = e.pageX - rect.left;
+        state = null;
+        b.style.overflow = 'auto';
+    };
+    
+    PCG.initListeners = function initListeners() {
 
-            if(offsetX>this.els.navExpandControl.clientWidth/2){
-                toLeft = false;
-            }
-            pxToTime = (px)=>px/world.nav.width*(this.maxDate-this.minDate);
-
-            resizeUp();
-            window.addEventListener('mouseup', resizeUp);
-            document.addEventListener('mousemove', resizeMove);
-
-            this.els.navExpandControl.addEventListener('touchend', resizeUp);
-            this.els.navExpandControl.addEventListener('touchcancel', resizeUp);
-            this.els.navExpandControl.addEventListener('touchmove', touchResizeMove);//, true);
-            e.preventDefault && e.preventDefault();
-        };
-
-
-        this.els.navExpandControl.addEventListener('mousedown', resizeDown);
-        document.addEventListener('touchstart', (e)=>{
-            //console.log(e.path)
-        });
-        this.els.navExpandControl.addEventListener('touchstart', (e)=>{
-            if(e.touches && e.touches.length){
-                resizeDown( e.touches[ 0 ] );
-            }
-            document.body.style.overflow = 'hidden';
-
-            if(e.cancelable){
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        }, true);
-
-
-        const touchMoveMove = (e)=>{
-            if(e.touches && e.touches.length){
-                moveMove( e.touches[ 0 ] );
-            }
-        };
-        const moveMove = ( e ) => {
-            let point = e.clientX;
-
-            this.camera.action = 'move';
-            frame.from = startFrame +
-                ( point - start ) / world.nav.width * ( this.maxDate - this.minDate );
-            if( frame.from <= this.minDate ){
-                frame.from = this.minDate;
-            }
-            frame.to = frame.from + frameWidth;
-            if( frame.to >= this.maxDate ){
-                frame.to = this.maxDate;
-                frame.from = frame.to - frameWidth;
-            }
-
-
-            this.update();
-            if(e.cancelable){
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        };
-        const moveUp = (e) => {
-            window.removeEventListener( 'mouseup', moveUp );
-            document.removeEventListener( 'mousemove', moveMove );
-
-            this.els.navMoveControl.removeEventListener('touchend', moveUp);
-            this.els.navMoveControl.removeEventListener('touchcancel', moveUp);
-            this.els.navMoveControl.removeEventListener('touchmove', touchMoveMove);
-
-            e && e.cancelable && e.preventDefault();
-            document.body.style.overflow = 'auto';
-        };
-        const moveDown = (e)=> {
-            start = e.clientX;
-
-            world = this.world;
-            frame = this.frame;
-            frameWidth = frame.to - frame.from;
-            startFrame = frame.from;
-
-            moveUp();
-
-            window.addEventListener( 'mouseup', moveUp );
-            document.addEventListener( 'mousemove', moveMove );
-
-            this.els.navMoveControl.addEventListener('touchend', moveUp);
-            this.els.navMoveControl.addEventListener('touchcancel', moveUp);
-            this.els.navMoveControl.addEventListener('touchmove', touchMoveMove);//, true);
-
-            //e.preventDefault && e.preventDefault();
-        };
-        this.els.navMoveControl.addEventListener('mousedown', moveDown);
-
-        this.els.navMoveControl.addEventListener('touchstart', (e)=>{
-            if(e.touches && e.touches.length){
-
-                moveDown( e.touches[ 0 ] );
-            }
-            document.body.style.overflow = 'hidden';
-
-            //e.cancelable && e.preventDefault();
-        }, true);
-
-        const _self = this;
-        let lastNearest;
-        this.renderTo.graph.addEventListener('mousemove', function(e){
-            const x = e.offsetX;
-            const time = _self.xToTime(x),
-                sliceID = _self._binarySearch(time),
-                getX = _self.getX,
-                data = _self.data;
-
-            let i, sliceXPos, min = Infinity, dx, nearest;
-
-            for(i = -1; i < 2; i++){
-                sliceXPos = getX(data[sliceID+i][0]);
-                dx = Math.abs(sliceXPos-x);
-                if(dx<min){
-                    nearest = sliceID+i;
-                    min = dx;
+        if(PCG.listen)
+            return false;
+        PCG.listen = true;
+        var fn = {};
+        'move,down,up'.split(',').forEach(function(name) {
+            fn[name] = function(e) {
+                var target = e.target;
+                if(target.tagName === 'CANVAS'){
+                    if('PCG' in target){
+                        target.PCG[name](e);
+                    }
+                }else{
+                    current = null;
+                    if(last){
+                        last.hideTooltip();
+                    }
+                    last = null;
                 }
             }
-            if(lastNearest !== nearest){
-                requestAnimationFrame(()=>{
-                    _self.showTooltip(nearest);
-                });
-                lastNearest = nearest;
-            }
-        });
-        this.renderTo.graph.addEventListener('mouseleave', function(e){
-            _self.hideTooltip();
-            lastNearest = null;
-            e.stopPropagation();
         });
 
+        var touchDown = function (e) {
+            fn.down(e.touches[0])
+        };
+
+        var touchMove = function (e) {
+            fn.move(e.touches[0]);
+        };
+
+
+
+        doc.addEventListener('mousedown', fn.down, false);
+        doc.addEventListener('touchstart', touchDown, false);
+        doc.addEventListener('mousemove', fn.move, false);
+        doc.addEventListener('touchmove', touchMove, false);
+        doc.addEventListener('mouseup', fn.up, false);
+        doc.addEventListener('touchend', fn.up, false);
+        doc.addEventListener('touchcancel', fn.up, false);
+        window.addEventListener('mouseup', fn.up, false);
+
+        window.oncontextmenu = function(event) {
+            last && last.longTap(event)
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        };
     };
 })(window['PCG']);

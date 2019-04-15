@@ -1,12 +1,13 @@
 (function(PCG){
-    const D = PCG.D;
+    var D = PCG.D;
 
     var DPR = PCG.DPR = window.devicePixelRatio;
     PCG.LOG2 = Math.log( 2 );
     PCG.zeroFn = function(){return 0};
 
     var opacityGetter = function(el) { return el.opacity;};
-
+    var shouldDraw = function(el) { return el.opacity > 0;};
+    var getI = function(el) { return el.i;};
     PCG.prototype = {
 
         xToTime: PCG.zeroFn,
@@ -47,8 +48,8 @@
             navWindowOverlap: 2,
             navWindowDraggerWidth: 13,
 
-            navWindowDraggerHandleWidth: 2.5,
-            navWindowDraggerHandleheight: 13,
+            navWindowDragHandleWidth: 2.5,
+            navWindowDragHandleHeight: 13,
 
             axisWidth: 1,
             labelFont: 12,
@@ -71,7 +72,7 @@
                 axis: PCG.h2f('#182D3B20'), // CHECKED
                 scrollBG: PCG.h2f('#E2EEF9', 60),
                 scrollSelector: PCG.h2f('#C0D1E1'),
-                scrollResizers: PCG.h2f('#ffffff')
+                scrollDragHandle: PCG.h2f('#ffffff')
             },
             night: {
                 background: PCG.h2f('#242F3E'),
@@ -80,7 +81,7 @@
                 axis: PCG.h2f('#FFFFFF', 10), // CHECKED
                 scrollBG: PCG.h2f('#304259',60),
                 scrollSelector: PCG.h2f('#56626D'),
-                scrollResizers: PCG.h2f('#ffffff')
+                scrollDragHandle: PCG.h2f('#ffffff')
             }
         },
         formatters: {
@@ -124,6 +125,11 @@
         initCheckboxes: PCG.initCheckboxes,
         initDOM: PCG.initDOM,
         initListeners: PCG.initListeners,
+
+        move: PCG.move,
+        down: PCG.down,
+        longTap: PCG.longTap,
+        up: PCG.up,
         clear: function(){
             this.camera = null;
             this.colors = {};
@@ -136,9 +142,9 @@
             };
 
             this.columns = [];
-            for( let i in this.els ){
+            for( var i in this.els ){
                 if( this.els.hasOwnProperty( i ) ){
-                    const el = this.els[ i ];
+                    var el = this.els[ i ];
                     el.parentNode.removeChild( el )
                 }
             }
@@ -155,9 +161,9 @@
             for(var rowID in data.colors){
                 this.colors[rowID] = PCG.h2f(data.colors[rowID].substr(1));
             }
-            const columns = data.columns;
-            const myData = this.data;
-            var wholeData = columns.map((list)=>list.slice(1));
+            var columns = data.columns,
+                myData = this.data,
+                wholeData = columns.map(function(list){return list.slice(1);});
             this.rawData = wholeData.splice(1);
             this.timeline = wholeData[0];
             this.names = data.names;
@@ -171,16 +177,16 @@
 
             var i, _i;
             for( i = 0, _i = columns.length; i < _i; i++ ){
-                const column = columns[ i ];
+                var column = columns[ i ];
                 if( i > 0 ){
                     this.columns.push( column[ 0 ] );
                 }
                 if( i === 0 ){
-                    for( let j = 1, _j = column.length; j < _j; j++ ){
+                    for( var j = 1, _j = column.length; j < _j; j++ ){
                         myData.push( [ column[ j ] ] );
                     }
                 }else{
-                    for( let j = 1, _j = column.length; j < _j; j++ ){
+                    for( var j = 1, _j = column.length; j < _j; j++ ){
                         myData[ j - 1 ].push( column[ j ] );
                     }
                 }
@@ -198,6 +204,7 @@
 
             this.initCheckboxes();
             this.updatePreview = true;
+            this.collectWorldInfo();
 
             this.update();
             setTimeout(this._update, 100);
@@ -239,16 +246,16 @@
             }
         },
         _getMinMaxRow: function( from, to, row ){
-            const data = this.data;
-            let min = Infinity,
+            var data = this.data,
+                min = Infinity,
                 max = -Infinity,
 
                 i, j,
 
-                slice, point;
+                slice, point,
 
-            const visible = this._getVisible();
-            const visibleCount = visible.length;
+                visible = this._getVisible(),
+                visibleCount = visible.length;
 
             for( i = from; i <= to; i++ ){
                 slice = data[ i ];
@@ -263,11 +270,11 @@
 
             min = 0;
             max *= 1.05;
-            const delta = ( max - min );
+            var delta = ( max - min );
             if(max===-Infinity){
                 return this.camera.minMax;
             }
-            return { min, max, delta: delta };
+            return { min: min, max: max, delta: delta };
         },
         _getMinMax: function( from, to ){
             var l, _l, k, _k, i, _i;
@@ -398,7 +405,7 @@
             minMax1.updateDelta();
             minMax2.updateDelta();
             if(this.camera === null || camera){
-                let day = 1000*60*60*24;
+                var day = 1000*60*60*24;
                 var justCalc = !!camera;
                 camera = camera || {};
                 camera.minMax1 = minMax1;
@@ -550,8 +557,8 @@
             }
             if(visibleChanged || !this._visible.length){
                 this._visible = this._all
-                    .filter( el => el.opacity > 0 )
-                    .map( el => el.i );
+                    .filter( shouldDraw )
+                    .map( getI );
             }
             if(needMoreAnimation){
                 this.updatePreview = true;
@@ -562,12 +569,13 @@
         navGraphUpdateVisibility: PCG.navGraphUpdateVisibility,
         updateNavWindow: PCG.updateNavWindow,
         _binarySearch: function( time ){
-            const data = this.data;
-            let min = 0, max = data.length - 1, current;
+            var data = this.data,
+                min = 0, max = data.length - 1, current,
 
-            let steps = Math.log( data.length ) / PCG.LOG2;
+                steps = Math.log( data.length ) / PCG.LOG2,
+                i;
 
-            for( let i = 0; i < steps; i++ ){
+            for( i = 0; i < steps; i++ ){
                 current = ( min + ( max - min ) / 2 ) | 0;
                 if( data[ current ][ 0 ] < time ){
                     min = current;
@@ -595,24 +603,32 @@
             this.updateGraph();
         },
         _removeTooltipCircles: function() {
-            let circle;
+            var circle;
             while( ( circle = this.els.highlightCircles.pop() ) ){
                 this.els.graph.removeChild( circle );
             }
         },
+        lastHash: '',
+        nextNavUpdate: 0,
         showTooltip: function( sliceID ){
-            console.log(sliceID)
-            const slice = this.data[ sliceID ],
-                time = slice[ 0 ];
-            const visible = this._getVisible();
+            this.tooltip = {
+                opacity: 0,
+                visible: true,
+                slice: sliceID
+            };
+            return;
+            var slice = this.data[ sliceID ],
+                time = slice[ 0 ],
+                visible = this._getVisible();
+
             this.els.tooltip.style.display = 'block';
-            let i, _i, val, name;
+            var i, _i, val, name;
 
             // remove old circles
             this._removeTooltipCircles();
             D.removeChildren( this.els.tooltipInfo );
 
-            const xPos = this.getX( time );
+            var xPos = this.getX( time )/PCG.DPR;
             // add new circles
             for( i = 0, _i = visible.length; i < _i; i++ ){
                 val = slice[ visible[ i ] + 1 ];
@@ -639,25 +655,30 @@
                 )
             }
             this.els.tooltipDate.innerText = this.formatters.weekDate( time );
-            const tooltipStyle = this.els.tooltip.style;
-            const tooltipRect = this.els.tooltip.getClientRects()[0];
+            var tooltipStyle = this.els.tooltip.style,
+                tooltipRect = this.els.tooltip.getClientRects()[0];
 
             this.els.verticalMouseSlice.style.left = xPos-1+'px';
             this.els.verticalMouseSlice.style.display = 'block';
 
-            let tooltipLeft = xPos - tooltipRect.width/3.5;
+            var tooltipLeft = xPos - tooltipRect.width/3.5;
             if(tooltipLeft<1){
                 tooltipLeft = 1;
             }
-            if(tooltipLeft+tooltipRect.width+1>this.world.graph.width){
-                tooltipLeft = this.world.graph.width - tooltipRect.width - 1;
+            if((tooltipLeft+tooltipRect.width+1)*PCG.DPR>this.world.graph.width){
+                tooltipLeft = this.world.graph.width/PCG.DPR - tooltipRect.width - 1;
             }
             tooltipStyle.left = tooltipLeft+'px';
         },
+        tooltip: null,
         hideTooltip: function(){
-            this.els.tooltip.style.display = 'none';
+            if(this.tooltip){
+                this.tooltip.visible = false;
+                this.update();
+            }
+            /*this.els.tooltip.style.display = 'none';
             this.els.verticalMouseSlice.style.display = 'none';
-            this._removeTooltipCircles();
+            this._removeTooltipCircles();*/
         },
         updateConsts: function() {
             DPR = PCG.DPR = window.devicePixelRatio;
@@ -674,17 +695,23 @@
 
 
             this.updateConsts();
-            const navRect = this.renderTo.nav.getClientRects()[ 0 ];
-            const graphRect = this.renderTo.graph.getClientRects()[ 0 ];
+            var graphRect = this.renderTo.graph.getClientRects()[ 0 ];
+
+            var canvasRect = this.els.graph.getBoundingClientRect();
+            var top = this.renderTo.graph.offsetTop+this.renderTo.graph.parentNode.offsetTop;
+            var w = canvasRect.width*PCG.DPR;
+
             this.scheme = this.consts[this.day?'day':'night'];
-            const canvasRect = this.els.graph.getBoundingClientRect();
+
             this.world = {
                 nav: {
-                    width: navRect.width*PCG.DPR,
-                    height: navRect.height*PCG.DPR
+                    width: w - this.constsDPR.paddingLeft - this.constsDPR.paddingRight,
+                    height: this.constsDPR.navigationHeight
                 },
                 graph: {
-                    width: canvasRect.width*PCG.DPR,
+                    left: canvasRect.left*PCG.DPR,
+                    top: top*PCG.DPR,
+                    width: w,
                     height: canvasRect.height*PCG.DPR - this.consts.XAxisHeight*PCG.DPR
                 }
             };

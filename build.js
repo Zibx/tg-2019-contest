@@ -1,3 +1,6 @@
+
+// It is poor man's builder, do not look at it!
+
 const fs = require('fs'),
     path = require('path');
 

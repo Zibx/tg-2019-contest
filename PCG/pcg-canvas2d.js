@@ -1,8 +1,21 @@
 (function(PCG){
 
 
-    const sqrt = Math.sqrt;
-    const Point = function(x,y) {
+    function roundedRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x, y + radius);
+        ctx.lineTo(x, y + height - radius);
+        ctx.arcTo(x, y + height, x + radius, y + height, radius);
+        ctx.lineTo(x + width - radius, y + height);
+        ctx.arcTo(x + width, y + height, x + width, y + height-radius, radius);
+        ctx.lineTo(x + width, y + radius);
+        ctx.arcTo(x + width, y, x + width - radius, y, radius);
+        ctx.lineTo(x + radius, y);
+        ctx.arcTo(x, y, x, y + radius, radius);
+    }
+
+    var sqrt = Math.sqrt;
+    var Point = function(x,y) {
         if(x instanceof Point){
             y = x.y;
             x = x.x;
@@ -58,7 +71,7 @@
             return this;
         }
     };
-
+    PCG.Point = Point;
     PCG.Canvas2d = function(canvas, cfg) {
         this.c = canvas;
         this.tmp = {};
@@ -132,16 +145,8 @@
         },*/
         resize: function() {
             this.scheme = this.parent.scheme;
-            const c = this.c,
-                tmp = this.tmp;
-            this.w = c.width =/*c.width =
-                tmp.shadow.el.width =
-                tmp.graph.el.width =
-                tmp.nav.el.width =
-                tmp.navWrap.el.width =
-                tmp.x.el.width =*/
-                    c.clientWidth*PCG.DPR;
-
+            var c = this.c;
+            this.w = c.width = c.clientWidth*PCG.DPR;
             this.h = c.height = c.clientHeight*PCG.DPR;
 
             this.tmpHeight('graph', this.consts.graphicHeight);
@@ -149,17 +154,18 @@
             this.tmpHeight('nav', this.consts.navigationHeight, this.w-this.consts.paddingLeft - this.consts.paddingRight);
             var pad = (this.consts.navigationWrapperHeight-this.consts.navigationHeight)/2;
             this.tmpHeight('navWrap', this.consts.navigationWrapperHeight,
-                this.w-this.consts.paddingLeft - this.consts.paddingRight+pad*2);
+                this.w-this.consts.paddingLeft - this.consts.paddingRight+pad*3);
             this.tmpHeight('circularCorners', this.consts.navigationRadius*2,this.consts.navigationRadius*2);
             this.tmpHeight('navWindow', this.consts.navigationWrapperHeight,this.consts.navWindowDraggerWidth*2);
 
-            this.tmpHeight('shadow', this.consts.graphicHeight+
+            this.tmpHeight('shadow', c.height,c.width);/*this.consts.graphicHeight+
                 this.consts.graphicPadding+
                 this.consts.axeX+
                 this.consts.navigationHeight+
-                this.consts.navWindowOverlap);
+                this.consts.navWindowOverlap);*/
 
             this.imageData = null;
+
             this.ctxReal.fillStyle = PCG.color(this.scheme.background);
             this.ctxReal.fillRect(0,0,this.w,this.h);
 
@@ -218,6 +224,7 @@
             //ctx.lineTo(time[i], arr[i-1]);
             ctx.lineTo(time[i-1]+(time[i-1]-time[i-2]), arr[i-1]);
             ctx.lineTo(time[i-1]+(time[i-1]-time[i-2]), h);
+
             ctx.fill();
         },
         axisY: function(text, pos, labelColor, axisColor) {
@@ -251,6 +258,7 @@
             ctx.fillText(text2, this.w-this.consts.paddingRight, pos-this.consts.axisYLabelPaddingBottom);
         },
         render: function() {
+            var ctx = this.activate('shadow');
 
             this.ctxReal.drawImage(this.tmp.graph.el,0,0);
             this.ctxReal.drawImage(this.tmp.x.el,0,this.consts.graphicHeight);
@@ -261,6 +269,8 @@
 
             this.ctxReal.drawImage(this.tmp.navWrap.el,
                 this.consts.paddingLeft-pad,this.consts.graphicHeight+this.tmp.x.height-pad);
+
+            //this.ctxReal.drawImage(this.tmp.shadow.el);
             //this.ctxReal.restore();
         },
         updateNavWindow: function() {
@@ -292,7 +302,7 @@
                 parent.frame = {to: lastDate, from: lastDate+parent.frame.from}
             }
 
-            const left = (((parent.frame.from-minDate)/momentumDelta*(w-pad*2))|0),
+            var left = (((parent.frame.from-minDate)/momentumDelta*(w-pad*2))|0),
                 rightWidth = (((maxDate-parent.frame.to)/momentumDelta*(w-pad*2)+pad)|0);
 
             ctx.fillStyle =PCG.color(this.scheme.scrollBG);
@@ -389,6 +399,22 @@
             ctx.globalCompositeOperation = 'destination-out';
             this.circulize(ctx,this.current.width,this.current.height);
 
+            ctx.globalCompositeOperation = 'source-over';
+            var pimpaW = this.consts.navWindowDragHandleWidth,
+                pimpaH = this.consts.navWindowDragHandleHeight;
+            ctx.fillStyle = PCG.color(this.scheme.scrollDragHandle);
+
+            roundedRect(ctx, this.current.width/4-pimpaW/2,
+                this.current.height/2-pimpaH/2,
+                pimpaW, pimpaH, pimpaW/2
+            );
+            ctx.fill();
+
+            roundedRect(ctx, this.current.width/4*3-pimpaW/2,
+                this.current.height/2-pimpaH/2,
+                pimpaW, pimpaH, pimpaW/2
+            );
+            ctx.fill();
 
 
 

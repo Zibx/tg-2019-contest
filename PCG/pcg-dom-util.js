@@ -1,11 +1,12 @@
 (function(PCG){
-    const svgNS = 'http://www.w3.org/2000/svg';
+    var svgNS = 'http://www.w3.org/2000/svg';
 
 // I am too lazy to do DOM manually / anyway this solution is optimal enough
 
 // ~jsx h function
-    const domEl = function( type, cfg = {} ){
-        const cls = cfg.cls,
+    var domEl = function( type, cfg ){
+        cfg = cfg || {};
+        var cls = cfg.cls,
             style = cfg.style,
             attr = cfg.attr,
             prop = cfg.prop,
@@ -14,14 +15,20 @@
             el = cfg.el || document.createElement( type ),
             classList = el.classList;
 
-        let i, _i;
+        var i, _i;
 
         if( cls ){
-            cls.split( ' ' ).forEach( ( clsItem ) => classList.add( clsItem ) );
+            if(el.tagName.toLowerCase() === 'svg'){
+                el.setAttribute('class',cls);
+            }else{
+                el.className = cls;
+            }
+            //if(el.className !== cls)debugger
+            //cls.split( ' ' ).forEach( function( clsItem ){ classList.add( clsItem ); });
         }
 
         if( style ){
-            Object.assign( el.style, style );
+            PCG.apply( el.style, style );
         }
 
         for( i in attr ){
@@ -37,8 +44,8 @@
         }
 
         for( i = 2, _i = arguments.length; i < _i; i++ ){
-            let child = arguments[ i ],
-                type = typeof child;
+            var child = arguments[ i ];
+            type = typeof child;
             if( type !== 'object' ){
                 child = D.Text( child );
             }
@@ -52,33 +59,33 @@
         return el;
     };
 
-    const D = PCG.D = {
+    var D = PCG.D = {
         svg: null,
         label: null,
         div: null,
         path: null,
         canvas: null,
-        Text: ( val ) => document.createTextNode( val )
+        Text: function( val ){ return document.createTextNode( val );}
     };
-    'div,input,label,canvas'.split( ',' ).forEach( ( name ) => {
-        D[ name ] = ( ...args ) => {
-            return domEl.apply( null, [ name, ...args ] )
+    'div,input,label,canvas'.split( ',' ).forEach( function( name ){
+        D[ name ] = function(){
+            return domEl.apply( null, [ name ].concat([].slice.call(arguments)))
         };
     } );
 
-    'svg,path,circle'.split( ',' ).forEach( ( name ) => {
-        D[ name ] = ( cfg, ...args ) => {
+    'svg,path,circle'.split( ',' ).forEach( function( name ){
+        D[ name ] = function( cfg){
             if( !cfg ){
                 cfg = {};
             }
             cfg.el = document.createElementNS( svgNS, name );
             cfg.el.setAttribute( 'xmlns', svgNS );
-            return domEl.apply( null, [ null, cfg, ...args ] )
+            return domEl.apply( null, [ null ].concat([].slice.call(arguments)))
         };
     } );
 
-    D.removeChildren = (el)=>{
-        let subEl;
+    D.removeChildren = function(el){
+        var subEl;
         while((subEl = el.lastChild)){
             el.removeChild(subEl);
         }
