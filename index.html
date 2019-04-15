@@ -224,7 +224,9 @@
          */
         var customZoom = function(date) {
             var dates = [date, new Date(date-PCG.DAY), new Date(date-PCG.DAY*7)],
-                names = dates.map(PCG.dateFormatter),
+                names = dates.map(function(val) {
+                    return PCG.dateFormatter(val, PCG.DAY)
+                }),
                 datas = [null, null, null],
                 colors = [
                     '#558DED',
@@ -278,6 +280,19 @@
                 };
                 if(cfg.zoomType === PCG.ZOOM.CUSTOM){
                     cfg.customZoom = customZoom
+                    cfg.onZoom = function(zoom) {
+                        try{
+                            if( zoom ){
+                                this.frame.from = this.timeline[0];
+                                this.frame.to = this.timeline[this.timeline.length-1];
+                                graphs[ i ].classList.add( 'hidePreview' )
+                            }else{
+                                graphs[ i ].classList.remove( 'hidePreview' )
+                            }
+                        }catch(e){
+                            // fuck old browsers
+                        }
+                    };
                 }
                 var graph = new PCG( cfg );
 

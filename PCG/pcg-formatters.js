@@ -38,7 +38,7 @@
         if(!(date instanceof Date)){
             date = new Date(Math.round(date/day)*day);
         }
-        return weekDays[date.getDay()]+', '+PCG.dateFormatter(date);
+        return weekDays[date.getDay()]+', '+PCG.dateFormatter(date, day);
     };
     PCG.numberFormat = function(num) {
         var strNum = num+'',

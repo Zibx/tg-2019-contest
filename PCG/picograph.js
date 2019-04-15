@@ -234,6 +234,7 @@
             this.update();
             var _self = this;
             setTimeout(function() {
+                _self.onZoom && _self.onZoom(_self.zoomed);
                 _self.updateXGranule(_self.camera, _self.frame);
                 _self.update();
             }, 100);
@@ -747,6 +748,7 @@
             _self._update();
             _self.updateXGranule(_self.camera, _self.frame);
             this.els.XAxisHash = {};
+            this.onZoom && this.onZoom(this.zoomed);
             _self._update();
             _self.updateXGranule(_self.camera, _self.frame);
 

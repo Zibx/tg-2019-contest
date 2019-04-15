@@ -12,8 +12,13 @@ body {
 
 .graph {
     height: 418px;
+    overflow: hidden;
+    transition: height ease-in 0.3s;
 }
 
+.graph.hidePreview {
+    height: 355px;
+}
 
 .graph-nav {
     height: 50px;

@@ -28,7 +28,7 @@
             from1 = minMax1.min;
 
 
-        var count = 7,
+        var count = 6,
             getY = this.getY1;
 
 
@@ -63,7 +63,7 @@
             out = [0,25,50,75,100];
             getY = this.getPercentY
         }else{
-            var tinyChange = delta1/16;
+            var tinyChange = delta1/10;
             for(var key in hash){
                 canUse[Math.round(hash[key].val/tinyChange)] = key;
             }
@@ -172,36 +172,29 @@
         var key;
         var canUse = {};
 
-        var tinyChange = step/2;
+        var tinyChange = step/6;
             for(key in hash){
                 canUse[Math.round(hash[key].val/tinyChange)] = key;
             }
 
 
         var l = delta/width*this.constsDPR.paddingLeft;
-        for(i = from; i < to+step; i+=step){
-            val = ((step*100000+this.camera.offset-this.frame.from) % step) /*- (this.frame.from % this.camera.AxisXGranule)*/+i;
-
-            var nearlyVal = Math.round(val/tinyChange);
-            if(nearlyVal in canUse){
-                date = canUse[nearlyVal]
-                left = this.getX( hash[date].val );
-            }else{
-                left = this.getX( val );
-                date = PCG.dateFormatter( val, minDelta );
-
+        var easyScale = false;
+        if(this.zoomed){
+            if(this.frame.to-this.frame.from<PCG.DAY*2){
+                easyScale = true;
             }
-            usedHash[ date ] = true;
+        }
+        if( easyScale ){
+            var s = (this.frame.to-this.frame.from)/7.5;
 
-            if(date in hash){
 
-                item = hash[date];
-                item.visible = true;
-                item.left = left;//label.style.left = leftSetter(left,width) +'px';
-            }else{
-                if(this.XAxisLabelCount>70){
-                    continue;
-                }
+            for( i = from; i < to + s; i += s ){
+                val = i+s;
+                date = PCG.dateFormatter( new Date(Math.round(val/PCG.HOUR)*PCG.HOUR), PCG.HOUR );
+                usedHash[ date ] = true;
+                left = this.getX( val );
+
                 item = hash[ date ] = {
                     val: val,
                     left: left,
@@ -209,10 +202,42 @@
                     label: date,
                     opacity: 1
                 };
-                this.XAxisLabelCount++;
+            }
+        }else{
+            for( i = from; i < to + step; i += step ){
+                val = ( ( step * 100000 + this.camera.offset - this.frame.from ) % step ) /*- (this.frame.from % this.camera.AxisXGranule)*/ + i;
+
+                var nearlyVal = Math.round( val / tinyChange );
+                if( nearlyVal in canUse ){
+                    date = canUse[ nearlyVal ]
+                    left = this.getX( hash[ date ].val );
+                }else{
+                    left = this.getX( val );
+                    date = PCG.dateFormatter( val, minDelta );
+
+                }
+                usedHash[ date ] = true;
+
+                if( date in hash ){
+
+                    item = hash[ date ];
+                    item.visible = true;
+                    item.left = left;//label.style.left = leftSetter(left,width) +'px';
+                }else{
+                    if( this.XAxisLabelCount > 30 ){
+                        continue;
+                    }
+                    item = hash[ date ] = {
+                        val: val,
+                        left: left,
+                        visible: true,
+                        label: date,
+                        opacity: 1
+                    };
+                    this.XAxisLabelCount++;
+                }
             }
         }
-
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         ctx.font = this.constsDPR.labelFont+'px HelveticaNeue-Light, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif';
