@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, minimal-ui, viewport-fit=cover">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#287ba4">
+	<meta name="apple-mobile-web-app-title" content="Picograph">
+	<meta name="application-name" content="Picograph">
+	<meta name="msapplication-TileColor" content="#287ba4">
+	<meta name="theme-color" content="#ffffff">
+
+	<title>Picograph</title>
+	<script src="PCG/base.js"></script>
+	<script src="PCG/pcg-util.js"></script>
+	<script src="PCG/pcg-animation-consts.js"></script>
+	<script src="PCG/pcg-dom-util.js"></script>
+	<script src="PCG/pcg-canvas2d.js"></script>
+	<script src="PCG/pcg-ajax.js"></script>
+	<script src="PCG/pcg-checkboxes.js"></script>
+	<script src="PCG/pcg-dom.js"></script>
+	<script src="PCG/pcg-navigation.js"></script>
+	<script src="PCG/pcg-formatters.js"></script>
+	<script src="PCG/pcg-graph.js"></script>
+	<script src="PCG/pcg-axis.js"></script>
+	<script src="PCG/picograph.js"></script>
+
+	<!--<script src="build/build.js"></script>-->
+	<link href="PCG/styles.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	<style>
+		.data-set-el {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			margin: 40px;
+		}
+		.data-set-el .current {
+			transform-origin: top center;
+		}
+		.data-set-el .new {
+			position: absolute;
+			opacity: 0;
+			transform-origin: bottom center;
+		}
+		.animating.data-set-el .current {
+			position: absolute;
+			animation-name: rotate;
+			animation-duration: 0.3s;
+			animation-iteration-count: 1;
+			animation-delay: 0.00001s;
+			animation-fill-mode: forwards;
+		}
+		.animating.data-set-el .new {
+			position: relative;
+			order: -1;
+			animation-name: rotate;
+			animation-duration: 0.3s;
+			animation-iteration-count: 1;
+			animation-delay: 0.00001s;
+			animation-fill-mode: forwards;
+			animation-direction: reverse;
+		}
+		@keyframes rotate {
+			0% {
+				transform: scale(1) rotateX(0);
+				opacity: 1;
+			}
+			100% {
+				transform: scale(1, 0) rotateX(90deg);
+				opacity: 0;
+			}
+		}
+	</style>
+<div class="data-set">
+	<div class="data-set-el">
+		<span class="current">sunday</span>
+		<span class="new">monday</span>
+	</div>
+</div>
+<script>
+    var dataSet = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    var dataSetEl = document.querySelector('.data-set-el');
+    var dataCurEl = dataSetEl.querySelector('.current'),
+	    dataNewEl = dataSetEl.querySelector('.new');
+    var currentData = dataCurEl.innerHTML,
+        newData = 0,
+        newDataText;
+    dataSetEl.addEventListener('click', function() {
+        currentData = dataNewEl.innerHTML;
+        newData = parseInt(newData) + 1;
+        newDataText = dataSet[newData];
+        dataNewEl.innerHTML = newDataText;
+        dataSetEl.classList.add('animating');
+        dataSetEl.offsetWidth = dataSetEl.offsetWidth;
+        setTimeout(function() {dataSetEl.classList.remove('animating');
+            dataCurEl.innerHTML = newDataText;
+
+        }, 600);
+    })
+</script>
+</body>
+</html>
