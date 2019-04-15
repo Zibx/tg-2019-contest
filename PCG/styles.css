@@ -88,12 +88,18 @@ H1 {
     flex: none;
     display: flex;
     align-items: center;
-    margin: 0 21px 21px 0;
-    border: 1px solid #e6ecf0;
+    margin: 0 8px 10px 0;
+    border: 2px solid #e6ecf0;
     border-radius: 2em;
-    padding: 7px 18px 7px 10px;
+    padding: 12px 29px 14px 29px;
+    font-size: 19px;
+    line-height: 20px;
     color: #43484B;
     cursor: pointer;
+}
+
+.error-checkbox + .pcg-checkbox__img-wrapper + .pcg-checkbox__text-wrapper {
+    animation: shake 0.6s infinite;
 }
 
 .pcg-checkbox__input {
@@ -105,33 +111,37 @@ H1 {
 }
 
 .pcg-checkbox__img-wrapper {
-    position: relative;
-    margin-right: 12px;
-}
-
-.pcg-checkbox__img-wrapper::after {
-    content: "";
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: block;
-    width: 26px;
-    height: 26px;
-    background-color: #fff;
-    border-radius: 50%;
-    transition: width 0.3s ease, height 0.3s ease;
+    top: 15px;
+    left: 14px;
+    flex: none;
+    transform: scale(0);
+    transition: all 0.3s ease;
 }
 
 .pcg-checkbox__img {
     display: block;
-    width: 34px;
-    height: 34px;
+    width: 18px;
+    height: 16px;
 }
 
-.pcg-checkbox__input:checked + .pcg-checkbox__img-wrapper::after {
-    width: 0;
-    height: 0;
+.pcg-checkbox__img svg {
+    display: block;
+    fill: #fff;
+}
+
+.pcg-checkbox__text-wrapper {
+    flex: none;
+    transition: margin 0.3s ease;
+}
+
+.pcg-checkbox__input:checked + .pcg-checkbox__img-wrapper {
+    transform: scale(1);
+}
+
+.pcg-checkbox__input:checked + .pcg-checkbox__img-wrapper + .pcg-checkbox__text-wrapper {
+    margin-left: 10px;
+    margin-right: -10px;
 }
 
 .pcg-y-axis {
@@ -217,8 +227,6 @@ img {
     border-left: 2px solid #182d3b0a;
     display: none;
 }
-
-
 .graph-mode-switch {
     font-size:22px;
     text-align: center;
@@ -231,33 +239,51 @@ circle {
 .night circle {
     fill: #212f3f
 }
-.night .title {color: #fff;}
-.night .graph-nav {background: #212f3f}
-.night .navWindow {border-color: rgba(91, 107, 127, 0.9)}
-.night .navEar {border-color: #250; background-color: rgba(25, 37, 52, 0.7)}
-.night .pcg-checkbox-wrapper {border-width: 2px;border-color: #344658; color:#fff;    margin: 0 27px 25px 0;}
-.night .pcg-checkbox__img-wrapper::after {background-color: #212f3f}
-.night .pcg-y-axis {border-bottom-color: rgba(91, 107, 127, 0.3)}
-.night .pcg-y-axis-label, .night .pcg-x-axis-label {color: #5b6b7f; text-shadow: 2px 2px 0 #213040;}
-.night .graph-mode-switch {color: #439AD9}
-.night .pcg-tooltip {background-color: #1a2837; box-shadow: none;}
-.night .pcg-tooltip__date {color: #E5EFF5}
-.night .pcg-tooltip__vertical-slice {border-color: rgba(91, 107, 127, 0.9)}
-.night {background: #213040}
-/*.night .title {color: #7BC4FB}*/
+.night .title {
+    color: #fff;
+}
+.night .graph-nav {
+    background: #212f3f;
+}
+.night .navWindow {
+    border-color: rgba(91, 107, 127, 0.9);
+}
+.night .navEar {
+    border-color: #250;
+    background-color: rgba(25, 37, 52, 0.7);
+}
+.night .pcg-checkbox-wrapper {
+    border-color: #344658;
+    color:#fff;
+    /*margin: 0 27px 25px 0;*/
+}
+.night .pcg-y-axis {
+    border-bottom-color: rgba(91, 107, 127, 0.3);
+}
+.night .pcg-y-axis-label, .night .pcg-x-axis-label {
+    color: #5b6b7f;
+    text-shadow: 2px 2px 0 #213040;
+}
+.night .graph-mode-switch {
+    color: #439AD9;
+}
+.night .pcg-tooltip {
+    background-color: #1a2837;
+    box-shadow: none;
+}
+.night .pcg-tooltip__date {
+    color: #E5EFF5;
+}
+.night .pcg-tooltip__vertical-slice {
+    border-color: rgba(91, 107, 127, 0.9);
+}
+.night {
+    background: #213040;
+}
 
-.night .pcg-checkbox__img-wrapper {position: relative; width: 28px; height: 28px; background-color: #fff; border-radius: 50%; overflow: hidden;}
-.night .pcg-checkbox__img-wrapper svg {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%)
-}
-.night .pcg-checkbox__img-wrapper::after {
-    width: 24px;
-    height: 24px;
-    background-color: #213040;
-}
+
+
+
 
 path {
     transition: opacity ease-in 0.3s;
@@ -321,4 +347,21 @@ path {
 
 .pcg-yAxisLabelsStorage, .pcg-xAxisLabelsStorage, .pcg-yAxisStorage {
     display: none;
+}
+
+@keyframes shake {
+    from, to {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+    }
+
+    10%, 30%, 50%, 70%, 90% {
+        -webkit-transform: translate3d(-10px, 0, 0);
+        transform: translate3d(-3px, 0, 0);
+    }
+
+    20%, 40%, 60%, 80% {
+        -webkit-transform: translate3d(10px, 0, 0);
+        transform: translate3d(3px, 0, 0);
+    }
 }
