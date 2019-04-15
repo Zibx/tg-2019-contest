@@ -159,6 +159,7 @@
             this.data = [];
             this.columns = [];
             this.zoomed = !!zoom;
+            this.updateZoomCls();
             this._visible = [];
             this.colors = {};
             //this.camera = null;
@@ -713,12 +714,17 @@
             }
         },
         zoomOut: function() {
-            for(var i in this.backup)
-                this[i] = this.backup[i];
+            for(var i in this.backup){
+                this[ i ] = this.backup[ i ];
+            }
+            this.updateZoomCls();
             this.calculateMinMax();
             this.initCheckboxes();
             this.updatePreview = true;
             this.update();
+        },
+        updateZoomCls: function() {
+            this.renderTo.header.className = 'title'
         },
         joinAndLoadData: function(data, dates, names, colors) {
 
