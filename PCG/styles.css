@@ -190,6 +190,8 @@ img {
 }
 .title-wrapper {
     position: relative;
+    display: flex;
+    flex-direction: column;
     margin-bottom: 20px;
 }
 .title {
@@ -217,6 +219,7 @@ img {
     transform: scale(1, 0) rotateX(90deg);
     transform-origin: top center;
     transition: all 0.3s ease;
+    cursor: pointer;
  }
 .zoom-el:focus {
     outline: none;
@@ -224,6 +227,7 @@ img {
 }
 .zoomed .zoom-el {
     position: relative;
+    order: -1;
     opacity: 1;
     z-index: 1;
     transform: scale(1, 1) rotateX(0);
