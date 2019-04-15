@@ -56,5 +56,16 @@
         }
         return out.join(' ');
     };
+    var floor = Math.floor;
+    PCG.numberFormatMega = function(num) {
+        if(num>1000000000){
+            return floor(num/1000000000)+'G';
+        }else if(num>1000000){
+            return floor(num/1000000)+'M';
+        }else if(num>1000){
+            return floor(num/1000)+'K';
+        }
+        return num;
+    }
 
 })(window['PCG']);

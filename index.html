@@ -276,7 +276,7 @@
                         from: -1000 * 60 * 60 * 24 * 30*2, // two month ago
                         to: null
                     },
-                    zoomType: i === 4?PCG.ZOOM.INTERPOLATE: i === 3?PCG.ZOOM.CUSTOM:PCG.ZOOM.LOAD
+                    zoomType: i === 4?PCG.ZOOM.PIE: i === 3?PCG.ZOOM.CUSTOM:PCG.ZOOM.LOAD
                 };
                 if(cfg.zoomType === PCG.ZOOM.CUSTOM){
                     cfg.customZoom = customZoom

@@ -67,30 +67,31 @@
 
         var minMaxesLocal = this._getMinMax( limits.from, limits.to );
 
-        this.updateCameraY( minMaxesLocal, dt );
 
-        /*var hash = [minDate, maxDate,
-            this.camera.minMax1.min,this.camera.minMax1.max,
-            this.camera.minMax2.min,this.camera.minMax2.max,
-            this._getOpacity().join('.')
-        ].join('.');
+            this.updateCameraY( minMaxesLocal, dt );
+        if(!this.thisIsAPIE){
+            /*var hash = [minDate, maxDate,
+                this.camera.minMax1.min,this.camera.minMax1.max,
+                this.camera.minMax2.min,this.camera.minMax2.max,
+                this._getOpacity().join('.')
+            ].join('.');
 
-        if(hash !== this.lastHash){*/
-        //var minMaxesLocal = this._getMinMax(limits.from, limits.to);
-
-
-        /*xToTime = this.xToTime = (x)=>x/width*momentumDelta+minDate,*/
-        var cache = this.graphCache;
+            if(hash !== this.lastHash){*/
+            //var minMaxesLocal = this._getMinMax(limits.from, limits.to);
 
 
-        var graphTimeLine = this.graphTimeLine;
+            /*xToTime = this.xToTime = (x)=>x/width*momentumDelta+minDate,*/
+            var cache = this.graphCache;
 
-        for( i = limits.from, _i = limits.to; i <= _i; i++ ){
-            graphTimeLine[ i ] = ( ( timeLine[ i ] - minDate ) * momentumRatio ) | 0;
+
+            var graphTimeLine = this.graphTimeLine;
+
+            for( i = limits.from, _i = limits.to; i <= _i; i++ ){
+                graphTimeLine[ i ] = ( ( timeLine[ i ] - minDate ) * momentumRatio ) | 0;
+            }
+
+            this.updateGraphData( limits );
         }
-
-        this.updateGraphData( limits );
-
 
         var graphStrokeWidth = this.constsDPR.graphStrokeWidth;
 
@@ -141,37 +142,59 @@
         ctx.lineWidth = graphStrokeWidth;
         ctx.lineJoin = 'bevel';
 
+        if(!this.thisIsAPIE){
 
-        var vStep;
-        if( this.stacked ){
-            v = _v - 1;
-            vStep = -1;
-        }else{
-            v = 0;
-            vStep = 1;
-        }
-
-
-        for( ; ; v += vStep ){
+            var vStep;
             if( this.stacked ){
-                if( v < 0 ) break;
+                v = _v - 1;
+                vStep = -1;
             }else{
-                if( v >= _v ) break;
+                v = 0;
+                vStep = 1;
             }
-            var color = this.getColor( this.columns[ visible[ v ] ], this._all[ visible[ v ] ].opacity );
-            var type = this.types[ this.columns[ visible[ v ] ] ];
-            if( type === 'line' ){
-                ctx.strokeStyle = color;
-                this.ctx.graph( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
-            }else if( type === 'bar' ){
-                ctx.fillStyle = color;
-                this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
-            }else if( type === 'area' ){
-                ctx.fillStyle = color;
-                this.ctx.area( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
-            }
-        }
 
+
+            for( ; ; v += vStep ){
+                if( this.stacked ){
+                    if( v < 0 ) break;
+                }else{
+                    if( v >= _v ) break;
+                }
+                var color = this.getColor( this.columns[ visible[ v ] ], this._all[ visible[ v ] ].opacity );
+                var type = this.types[ this.columns[ visible[ v ] ] ];
+                if( type === 'line' ){
+                    ctx.strokeStyle = color;
+                    this.ctx.graph( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+                }else if( type === 'bar' ){
+                    ctx.fillStyle = color;
+                    this.ctx.bar( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+                }else if( type === 'area' ){
+                    ctx.fillStyle = color;
+                    this.ctx.area( graphTimeLine, cache[ visible[ v ] ], limits.from, limits.to );
+                }
+            }
+        }else{
+            var SUM = 0;
+            for(v = 0; v < _v; v++){
+                var opac = this._all[ visible[ v ] ].opacity;
+                SUM += minMaxesLocal[visible[v]].max*opac;
+            }
+
+            var min = Math.min(width, height);
+            var r =(min/2-this.constsDPR.paddingRight)|0;
+            var start = 0;
+            for(v = 0; v < _v; v++){
+                opac = this._all[ visible[ v ] ].opacity;
+                var part = (minMaxesLocal[visible[v]].max*opac)/SUM;
+                ctx.fillStyle = this.getColor( this.columns[ visible[ v ] ], opac );
+                ctx.beginPath();
+                ctx.moveTo(width/2, height/2)
+                ctx.arc(width/2, height/2,r,start*Math.PI*2,(start+part)*Math.PI*2);
+                ctx.fill();
+                start+=part;
+            }
+
+        }
 
 
         var showSelection = false;
@@ -195,33 +218,34 @@
             }
         }
         //}
+        if(!this.thisIsAPIE){
 
-        this.updateYAxis( minMaxesLocal, dt );
-
-
-        if( showSelection ){
-            if( isBar === false ){
-                this.ctx.axisX( graphTimeLine[ tooltipSlice ], this.tooltip.opacity );
-            }
-            if( isLine ){
+            this.updateYAxis( minMaxesLocal, dt );
 
 
-                for( v = 0; v < _v; v++ ){
-                    var color = this.getColor( this.columns[ visible[ v ] ], this._all[ visible[ v ] ].opacity );
-                    this.ctx.circle(
-                        graphTimeLine[ tooltipSlice ],
-                        cache[ visible[ v ] ][ tooltipSlice ],
-                        this.constsDPR.selectionCircleRadius,
-                        this.constsDPR.selectionCircleBorder,
-                        color
-                    )
+            if( showSelection ){
+                if( isBar === false ){
+                    this.ctx.axisX( graphTimeLine[ tooltipSlice ], this.tooltip.opacity );
+                }
+                if( isLine ){
 
+
+                    for( v = 0; v < _v; v++ ){
+                        var color = this.getColor( this.columns[ visible[ v ] ], this._all[ visible[ v ] ].opacity );
+                        this.ctx.circle(
+                            graphTimeLine[ tooltipSlice ],
+                            cache[ visible[ v ] ][ tooltipSlice ],
+                            this.constsDPR.selectionCircleRadius,
+                            this.constsDPR.selectionCircleBorder,
+                            color
+                        )
+
+                    }
                 }
             }
+
+            this.updateXAxis( dt, minDate, maxDate );
         }
-
-        this.updateXAxis( dt, minDate, maxDate );
-
 
         if( this.nextNavUpdate > 0 ){
             this.update();

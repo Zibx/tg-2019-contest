@@ -11,7 +11,7 @@ var PCG = window['PCG'] = function(cfg) {
 };
 
 PCG.ZOOM = {
-    INTERPOLATE: 1,
+    PIE: 1,
     CUSTOM: 2,
     LOAD: 3
 };

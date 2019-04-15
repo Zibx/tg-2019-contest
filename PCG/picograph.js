@@ -155,7 +155,7 @@
         getColor: function(name, opacity) {
             return PCG.color(this.colors[ name ], opacity);
         },
-        load: function( data, zoom ){
+        load: function( data, zoom, noTZ ){
             this.data = [];
             this.columns = [];
             this.zoomed = !!zoom;
@@ -163,10 +163,20 @@
             this._visible = [];
             this.colors = {};
             //this.camera = null;
-
+            if(!zoom){
+                this.megadata = data;
+            }
             for(var rowID in data.colors){
                 this.colors[rowID] = PCG.h2f(data.colors[rowID].substr(1));
             }
+            if(!noTZ){
+                var tzo = +new Date().getTimezoneOffset() * 1000 * 60;
+                var cl0 = data.columns[ 0 ];
+                for( var t = 1, _t = cl0.length; t < _t; t++ ){
+                    cl0[ t ] += tzo;
+                }
+            }
+
             var columns = data.columns,
                 myData = this.data,
                 wholeData = columns.map(function(list){return list.slice(1);});
@@ -730,9 +740,13 @@
             }else if(this.zoomType === PCG.ZOOM.CUSTOM){
                 this.createBackup();
                 this.customZoom(date);
+            }else if(this.zoomType === PCG.ZOOM.PIE){
+                this.createBackup();
+                this.zoomToFrame();
             }
         },
         zoomOut: function() {
+            this.thisIsAPIE =false;
             this.warTime = true;
             this.unwar = true;
             this.warDuration = 0.5;
@@ -759,7 +773,34 @@
         updateXGranule: function(camera, frame) {
             var dt = this.maxDate-this.minDate;
             var minDelta = this.minDelta = dt<PCG.DAY*4?PCG.HOUR:PCG.DAY;
-            camera.AxisXGranule = minDelta * Math.pow(2,Math.round(Math.log(Math.ceil((frame.to-frame.from)/4/minDelta))/Math.log(2)));
+            if(camera){
+                camera.AxisXGranule = minDelta * Math.pow( 2, Math.round( Math.log( Math.ceil( ( frame.to - frame.from ) / 4 / minDelta ) ) / Math.log( 2 ) ) );
+            }
+        },
+        thisIsAPIE: false,
+        zoomToFrame: function() {
+            this.thisIsAPIE = true;
+            this.ctx.activate('x');
+            this.ctx.clear();
+            var minDate = this.frame.from,
+                maxDate = this.frame.to,
+                data = this.data,
+                limits = {
+                    from: Math.max( this._binarySearch( minDate ) - 1, 0 ),
+                    to: Math.min( this._binarySearch( maxDate ) + 1, data.length - 1 )
+                };
+
+            var megadata = this.megadata;
+            var result = {
+                colors: megadata.colors,
+                columns: megadata.columns.map(function(col) {
+                    return [col[0]].concat(col.slice(limits.from,limits.to));
+                }),
+                types: megadata.types,
+                names: megadata.names
+            };
+
+            this.load(result, true, true);
         },
         joinAndLoadData: function(data, dates, names, colors) {
 

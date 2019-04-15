@@ -85,7 +85,7 @@
 
             if(pos<graphHeight*1.01 && pos>0.05){
                 val = out[i];
-                var readable = PCG.numberFormat(val);
+                var readable = PCG.numberFormatMega(val);
                 usedHash[readable] = true;
                 if(readable in hash){
                     item = hash[readable];
@@ -131,7 +131,7 @@
             }
             if(this.y_scaled){
 
-                var label2 = PCG.numberFormat(Math.round((item.val-minMax1.min)/minMax1.delta*minMax2.delta+minMax2.min))
+                var label2 = PCG.numberFormatMega(Math.round((item.val-minMax1.min)/minMax1.delta*minMax2.delta+minMax2.min))
                 this.ctx.axisYscaled(
                     item.label,
                     label2,
