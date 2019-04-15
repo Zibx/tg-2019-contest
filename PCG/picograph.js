@@ -724,7 +724,7 @@
             this.update();
         },
         updateZoomCls: function() {
-            this.renderTo.header.className = 'title'
+            this.renderTo.header.className = ['title-row', this.zoomed? 'zoomed':'unzoomed'].join(' ');
         },
         joinAndLoadData: function(data, dates, names, colors) {
 

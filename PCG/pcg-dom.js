@@ -244,8 +244,7 @@
     
     PCG.initListeners = function initListeners() {
         var _self = this;
-        this.renderTo.title.addEventListener('click', function() {
-
+        this.renderTo.unZoom.addEventListener('click', function() {
             if(_self.zoomed){
                 _self.zoomOut();
             }
